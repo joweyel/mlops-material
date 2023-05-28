@@ -42,10 +42,18 @@ df = pd.read_parquet("data.parquet")
 For Code, look into the [duration-prediction-example](./duration-prediction-example.ipynb) notebook.
 
 ## Why do we need MLOps
-TODO
+When traning a model, the results of each run / experiment is logged with the experiment-tracker. Alongside with this the models are saved in the model registry. Processes that are utilized for this usually are not done inside a jupyter notebook. For this so called "Machine Learning Pipelines" are used. The training should be done automated and the human is excluded from the trainin process as much as possible. This practice is borrowed from the DevOps process. Each process of the ML Pipeline has its own code:
+
+![ML-Pipeline](imgs/ML_Pipeline.drawio.png)
+
 
 ## Course overview
-TODO
+1. Model Training Process
+2. Experiment Tracking (tracking of trained models, metrics etc.)
+3. Orchestration and ML Pipelines
+4. Model Deployment
+5. Model Monitoring
+6. Best Practices
 
 ## Environment preparation
 
@@ -164,6 +172,7 @@ git clone git@github.com:DataTalksClub/mlops-zoomcamp.git
 
 ## Homework
 
+TODO
 
 
 **References:**

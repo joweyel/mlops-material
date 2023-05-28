@@ -137,6 +137,14 @@ git clone git@github.com:DataTalksClub/mlops-zoomcamp.git
     - Choose `Connect to Host` (entries of `~/.ssh/config` are displayed) and choose the previously defined ssh-connection `mlops-zoomcamp`
     - You are now working on the EC2-Instance on AWS
 3. Click on the `Explorer`-Symbol on the left of `Visual Studio Code`, then `Open Folder` and navigate to the folder containing the Git-Repository.
+4. Configure VS Code so that it `jupyter notebooks` can be accessed over a remote connection.
+    - Open the console with ` Ctrl+Shift+` `
+    - Go to the `PORTS`-Header and click `Forward a Port`
+    - Set `Port` to `8888`. This will fill in `Local Address` with `localhost:8888`
+    - Copy the local address (hovering over local address)
+    - Run `jupyter notebook` command on AWS and get the link with the token
+    - Put Link into local browser to get access to `jupyter notebook` on AWS
+
 
 ## Homework
 

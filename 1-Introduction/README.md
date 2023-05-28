@@ -23,7 +23,23 @@ MLOps helps us in the stages of
 TODO
 
 ## Running example: NY Taxi trips dataset
-TODO
+
+### Loading the data-format `Parquet`
+
+**`Important`**: All datasets are currently provided in `parquet`-format instad of `csv`-format. To load `parquet`-files you need to do the following:
+```sh
+# install dependencies
+conda install pyarrow fastparquet
+```
+```python
+import pandas as pd
+# Very similar to loading csv-files
+df = pd.read_parquet("data.parquet")
+```
+
+### Training a ride duration prediction model
+
+For Code, look into the [duration-prediction-example](./duration-prediction-example.ipynb) notebook.
 
 ## Why do we need MLOps
 TODO

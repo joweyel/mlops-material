@@ -11,7 +11,7 @@
 
 <p align="center">
     <img src="imgs/MLOps_Components.png", style="max-width: 60%; height: auto;">
-    <figcaption align="center"><b>Figure 2.</b> Implementation of principles within technical components <a href="#ref1">[1]</a>(License: <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">Creative Commons</a>)</figcaption>
+    <figcaption align="center"><b>Figure 1.</b> Implementation of principles within technical components <a href="#ref1">[1]</a>(License: <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/">Creative Commons</a>)</figcaption>
 </p>
 
 MLOps helps us in the stages of
@@ -20,7 +20,48 @@ MLOps helps us in the stages of
 - Operating (deploying)
 
 ## MLOps maturity model
-TODO
+
+### Model Monitoring
+- Fully automating of reacting to an alert anbout dropping performance and automatically traiggering a training-pipeline, creating and deploying a new model
+    - Deploying a Model in a webservice
+    - Automatically detect errors / warnings and act accordingly fully automated
+    - Reaction to such events leads to retraining of a new model with a MLOps-Pipeline
+    - The new model is then deployed again
+
+<p align="center">
+    <img src="imgs/Model_Monitoring.jpg", style="max-width: 60%; height: auto;">
+    <figcaption align="center"><b>Figure 2.</b> Automated Model Monitoring Process<a href="#ref3">[3]</a></figcaption>
+</p>
+
+### Now: The MLOps Maturity Model (Summary)
+
+<u>Different Levels of Automation</u> <a href="#ref4">[4]</a>
+
+0. **`No MLOps (No Automation)`**
+    - using a Jupyter Notebook (not optimized for automation)
+    - No Experiment Tracking / Pipelining / Metadata Logging
+1. **`DevOps but no MLOps`**
+    - Releases are Automated
+    - Unit- & Integration-Tests
+    - CI/CD
+    - OPS Metrics
+    - No Experiment Tracking
+    - No reproducibility
+    - DS separated from Engineering Team
+2. **`Automated Training`**
+    - Trainig Pipeline
+    - Experiment Tracking
+    - Model Registry
+    - Low friction (manual) deployment
+    - DS work with Engineers
+3. **`Automated Model Deployment`**
+    - Easy to deploy model
+        - User asks for model over API, which is then made available e.g. over an URL
+    - A/B-Tests of Models (finding out which is better)
+    - Model Monitoring
+4. **`Full MLOps Automated Operations`**
+    - See `Figure 2.`
+
 
 ## Running example: NY Taxi trips dataset
 
@@ -179,5 +220,8 @@ TODO
 
 <a id="ref1" href="https://arxiv.org/abs/2205.02302">[1]</a> Machine Learning Operations (MLOps): Overview, Definition, and Architecture  
 
-
 <a id="ref2" href="https://en.wikipedia.org/wiki/MLOps">[2]</a> Wikipedia: MLOps
+
+<a id="ref3" href="https://www.youtube.com/watch?v=XwTH8BDGzYk&list=PL3MmuxUbc_hIUISrluw_A7wDSmfOhErJK&index=7">[3]</a>MLOps Zoomcamp 1.5 - MLOps maturity model
+
+<a id="ref4" href="https://learn.microsoft.com/en-us/azure/architecture/example-scenario/mlops/mlops-maturity-model">[4]</a> Machine Learning operations maturity model - Azure Architecture Center

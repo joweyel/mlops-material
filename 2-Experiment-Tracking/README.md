@@ -2,6 +2,13 @@
 
 * [Slides](https://drive.google.com/file/d/1YtkAtOQS3wvY7yts_nosVlXrLQBq5q37/view?usp=sharing)
 
+## Workshop: MLOps Zoomcamp - Experiment Tracking with Weights and Biases - Soumik Rakshit
+- A (free) Weights and Biases account is required
+- [Youtube-Link](https://www.youtube.com/watch?v=yNyqFMwEyL4)
+- [Slides](https://docs.google.com/presentation/d/19Ops4rTx57vyCTEyo8KR-JGXnHP9hHWUcq2T4m4N-sg/edit#slide=id.g13e4c738292_0_0)
+- [wandb-Repo to Workshop](https://github.com/soumik12345/mlops-zoomcamp-wandb)
+- [Homework-Link (Section 2.7)](https://github.com/DataTalksClub/mlops-zoomcamp/blob/main/cohorts/2023/02-experiment-tracking/wandb.md)
+
 
 ## 2.1 Experiment tracking intro
 

@@ -88,6 +88,61 @@ On the left you can see an empty list of registered models from the freshly crea
 
 ## 2.2 Getting started with MLflow
 
+This part show how to set up and run experiments with MLflow.
+
+### Create MLflow conda-environment
+```sh
+conda create -n exp-tracking-env python=3.9 pip
+```
+The `pip` at the end is sometimes required when working on AWS, when `python3-pip` is not installed on the EC2-Instance. On your home computer you most probably have pip already installed, however it is advised to specify it at the creation of a new environment.
+
+### Installing requiements (from file)
+Install all dependencies from [mlflow_requirements.txt](mlflow_requirements.txt) with 
+```sh
+pip install -r mlflow_requirements.txt
+```
+<u>List of required packages</u>
+```bash
+mlflow
+jupyter
+scikit-learn
+pandas
+seaborn
+hyperopt
+xgboost
+```
+
+### Running MLflow and opening the UI
+
+#### **`Running MLflow locally`**
+When running the UI locally you can proceed as seen before:
+```sh
+mlflow ui [-parameters]
+```
+
+#### **`Accessing UI when running MLflow on AWS`**
+
+1. Start the MLflow UI
+    ```sh
+    # will show http://127.0.0.1:5000
+    mlflow ui [-parameters]
+    ```
+2. New ssh-connection with port forwarding
+    ```sh
+    ssh -L 5000:localhost:5000 <aws-ec2-name>
+    ```
+3. You can now open the MLflow UI on your local machine at: `http://127.0.0.1:5000`
+
+#### **`Explicitely specifying a Database-Backend`**
+
+Choosing a specific database type to save the results of experiments to (here: `sqlite`-database)
+```sh
+mlflow ui --backend-store-uri sqlite:///mlflow.db
+```
+When clicking on the `models`-tab in the MLflow UI you should not get an error now.
+
+// TODO
+
 ## 2.3 Experiment tracking with MLflow
 
 ## 2.4 Model management

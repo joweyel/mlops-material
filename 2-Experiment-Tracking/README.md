@@ -141,11 +141,173 @@ mlflow ui --backend-store-uri sqlite:///mlflow.db
 ```
 When clicking on the `models`-tab in the MLflow UI you should not get an error now.
 
-// TODO
+#### **`Importing and using MLflow`**
+First thing to do is to import MLflow and set the tracking URI, s.t. MLflow writes to it. You also need to specify a experiment name. All runs are now assigned the specified experiment.
+```python
+import mlflow
+mlflow.set_tracking_uri("sqlite:///mlflow.db")
+# experiment will be created if not already existing
+mlflow.set_experiment("my-experiment")
+```
+You should be able to see the experiment in the MLflow UI. Now you should be able to run you code, that uses the MLflow methodology and see the results from code like this:
+```python
+# Set everything inside a mlflow-run
+with mlflow.start_run():
+
+    # Setting tags/metadata
+    mlflow.set_tag("developer", "johannes")
+    # log data about the dataset
+    mlflow.log_param("train-data-path", "./data/yellow_tripdata_2022-01.parquet")
+    mlflow.log_param("valid-data-path", "./data/yellow_tripdata_2022-02.parquet")
+
+    alpha = 0.01
+    # logging the alpha parameter
+    mlflow.log_param("alpha", alpha)
+
+    lr = Lasso(alpha)
+    lr.fit(X_train, y_train)
+    
+    y_pred = lr.predict(X_val)
+    rmse = mean_squared_error(y_val, y_pred, squared=False)
+    # Log metric
+    mlflow.log_metric("rmse", rmse)
+```
+The [code](duration-prediction.ipynb) is from the chapter 2 version of the re-occuring notebook.
 
 ## 2.3 Experiment tracking with MLflow
+After this section you should be able to:
+- Add paramter tuning to the notebook
+- See the results in MLflow UI
+- Choose the best performing models
+- Use Autolog
+
+### Hyperparameter tuning with `hyperopt` using a `xgboost`-model
+
+1. Importing the relevant packages
+```python
+import xgboost as xgb
+
+from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
+from hyperopt.pyll import scope
+```
+- **`hyperopt`**-imports here:
+    - `fmin`: for finding minimum output of a function
+    - `tpe (Tree Parzen Estimators)`: Graphical model (GM)-based optimization algorithm using Theano
+    - `hp`: Contains a bunch of methods to control the search-space for (each) hyperparameter
+    - `STATUS_OK`: "Signal" that is sent, if a run of hpyerparameter optimization has concluded successfully
+    - `Trials`: keeps track of the informations of each run
+- **`hyperopt.pyll`**-imports here:
+    - [`scope`](https://hyperopt.github.io/hyperopt/getting-started/search_spaces/): creates a range (search-scope) of integer values 
+
+
+**Defining the machine learning model and its objective to use for hyperparameter optimization**
+```python
+def objective(params):
+    with mlflow.start_run():
+        mlflow.set_tag("model", "xgboost")
+        mlflow.log_params(params)
+        booster = xgb.train(
+            params=params,
+            dtrain=train,
+            num_boost_round=1000,
+            evals=[(valid, 'validation')],
+            early_stopping_rounds=50
+        )
+        y_pred = booster.predict(valid)
+        rmse = mean_squared_error(y_val, y_pred, squared=False)
+        mlflow.log_metric("rmse", rmse)
+    
+    return { "loss": rmse, "status": STATUS_OK }
+```
+**Defining the search-spaces for hyperparameter optimization**
+
+For more information about defining search-spaces, look at the documentation-page [Defining a Search Space](https://hyperopt.github.io/hyperopt/getting-started/search_spaces/).
+
+```python
+search_space = {
+    "max_depth": scope.int(hp.quniform("max_depth", 4, 100, 1)),  # [4, 100]
+    "learning_rate": hp.loguniform("learning_rate", -3, 0),       # [exp(-3),  exp(0)] <~> [0.05, 1]
+    "reg_alpha": hp.loguniform("reg_alpha", -5, -1),              # [exp(-5), exp(-1)] <~> [0.0067, 0.367]
+    "reg_lambda": hp.loguniform("reg_lambda", -6, -1),            # [exp(-6), exp(-1)] <~> [0.0025, 0.367]
+    "min_child_weight": hp.loguniform("min_child_weight", -1, 3), # [exp(-1),  exp(3)] <~> [0.367, 20.09]
+    "objective": "reg:linear",
+    "seed": 42
+}
+```
+
+Run the hyperparameter optimization process (this can take quite some time)
+```python
+best_result = fmin(
+    fn=objective,
+    space=search_space,
+    algo=tpe.suggest,
+    max_evals=50,
+    trials=Trials()
+)
+```
+
+**Looking at results**
+
+Go to the MLflow UI and choose all runs, you have done during the current traning process. Then click on the compare button. You will get a visual representation of the results, that looks like this:
+![comparison](imgs/run_comparison.png)
+You are able to choose certain ranges of values on the lines below each parameter. With this, filtering of parameters that lie in certain ranges can be explored. 
+You can also choose other visualization methods for the results. 
+
+### Choosing the best model
+After conclusion of the optimization-process, you go the MLflow UI and filter for the model with the best RMSE-value.
+- (Quick and dirty way) Copy the parameters from the specified run into a notebook and put them into a dictionary of parameters
+- Copy the model-definition, used in the objective function, and use the parameters for training.
+
+**`Parameters`**
+| **Name**             | **Value**              | 
+| ---------------- | ------------------ |
+| `learning_rate`	   | 0.2907320120988654 | 
+| `max_depth`        | 21                 | 
+| `min_child_weight` | 1.0853986931084512 | 
+| `objective`	       | reg:linear         |
+| `reg_alpha`        | 0.07070755159719935|
+| `reg_lambda`	   |0.015498739698424788|
+| `seed`	           | 42                 |
+| **Metric** |  |
+| `RMSE`   |  6.303    |
+
+### Train and and save the model with the obtained parameters
+
+- The model is again logged with `MLflow`.
+- Now using [`mlflow.autolog()`](https://mlflow.org/docs/latest/tracking.html#automatic-logging)
+    - `autolog`: allows to log a lot of information very fast, given you use a ml-framework that is supported by mlflow
+
+```python
+params = {
+    "learning_rate": 0.2907320120988654,
+    "max_depth": 21,
+    "min_child_weight": 1.0853986931084512,
+    "objective": "reg:linear",
+    "reg_alpha": 0.07070755159719935,
+    "reg_lambda": 0.015498739698424788,
+    "seed": 42,
+}
+
+# Using autolog for logging with just 1 line of code
+mlflow.xgboost.autolog()
+
+booster = xgb.train(
+    params=params,
+    dtrain=train,
+    num_boost_round=1000,
+    evals=[(valid, 'validation')],
+    early_stopping_rounds=50
+)
+```
+You can see in the `MLflow` UI, that there were also some *artifacts* generated during the autologging process. Those artifacts contain the model as an `MLflow-Model` aswell as the feature importance of the model-weights.
+
+### Summary
+- How to tune Hyperparameter of an `XGBoost`-model with `hyperopt` 
+- How to select the best model with `MLflow` and find *good* areas in the space of the hyperparameters
 
 ## 2.4 Model management
+
+// TODO
 
 ## 2.5 Model registry
 

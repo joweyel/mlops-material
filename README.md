@@ -57,3 +57,7 @@ Machine Learning Operations repository with my work during MLOps Zoomcamp by [Da
 ### [Project](7-Project)
 
 * End-to-end project with all the things above
+
+
+### [Homework-Deadlines](Deadlines)
+- [MLOps Zoomcamp 2023 Deadlines](https://docs.google.com/spreadsheets/d/e/2PACX-1vRNTwA0Of1lyprYpn2YxU-l0gvNeq-up7g7ITB42nPf2gT9Qd3PTzqTmkjAZjk1s__r7D99CsJfcZEO/pubhtml?gid=0&single=true)

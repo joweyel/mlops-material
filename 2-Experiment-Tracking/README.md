@@ -316,3 +316,6 @@ You can see in the `MLflow` UI, that there were also some *artifacts* generated 
 ## 2.7 MLflow: benefits, limitations and alternatives
 
 ## 2.7 Homework
+
+- [MLflow-Homework](homework/homework.md)
+- [wandb-Homework](homework/wandb.md)

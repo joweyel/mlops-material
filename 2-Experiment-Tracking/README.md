@@ -307,13 +307,276 @@ You can see in the `MLflow` UI, that there were also some *artifacts* generated 
 
 ## 2.4 Model management
 
-// TODO
+### Machine Learning Lifecycle
+
+![ml_lifecycle](imgs/ml_lifecylce.png)
+
+- **`Model-Management as Subset of ML Lifecycle`**
+    - Experiment Tracking (with MLflow)
+    - Model Versioning
+    - Model Deployment
+    - Scaling of Hardware
+
+### Model Management
+- **`Models located in Folders (bad)`**
+    - Error prone 
+    - no versioning
+    - no model lineage
+
+### Model Management in MLflow (1. Way)
+- Tracking the model as an artifact
+```python
+# Set everything inside a mlflow-run
+with mlflow.start_run():
+
+    ... 
+
+    # Log metric
+    mlflow.log_metric("rmse", rmse)
+
+    # saves artifact to local disk and creates an artifact uri in the current run
+    mlflow.log_artifact(local_path="./models/lin_reg.bin", artifact_path="models_pickle")
+```
+
+### Model Management in MLflow (2. Way)
+
+- Call model logging function for a specific ml-package
+
+```python
+with mlflow.start_run():
+    best_params = {
+        "learning_rate": 0.2907320120988654,
+        "max_depth": 21,
+        "min_child_weight": 1.0853986931084512,
+        "objective": "reg:linear",
+        "reg_alpha": 0.07070755159719935,
+        "reg_lambda": 0.015498739698424788,
+        "seed": 42,
+    }
+
+    mlflow.log_params(best_params)
+
+    booster = xgb.train(
+        params=params,
+        dtrain=train,
+        num_boost_round=1000,
+        evals=[(valid, 'validation')],
+        early_stopping_rounds=50
+    )
+
+    y_pred = booster.predict(valid)
+    rmse = mean_squared_error(y_val, y_pred, squared=False)
+    mlflow.log_metric("rmse", rmse)
+
+    # ml-framework specific model-logging function
+    mlflow.xgboost.log_model(booster, artifact_path="models_mlflow")
+```
+
+![model-logging](imgs/tracked_model.png)
+- The output of the model-logging function are 
+    - `MLmodel`: Mlflow-model information
+    - `conda.yaml`: Information about conda environment in which model was run in
+    - `model.xgb`: Package-specific model-format (*here*: `xgb`)
+    - `requirements.txt`: Information about virtual environment in which model was run in
+    - `python_env.yaml`: Information about conda environment in which model was run in (only basic packages)
+
+### Saving the preprocessor (as a binary file / artifact)
+
+```python
+# Disable autologging
+mlflow.xgboost.autolog(disable=True)
+
+with mlflow.start_run():
+
+    ...
+
+    # saving the preprocessor-object that is used before using the data in ml-tasks
+    with open("models/preprocessor.b", "wb") as f_out:
+        pickle.dump(dv, f_out)
+
+    # save the data-preprocessor
+    mlflow.log_artifact("models/preprocessor.b", artifact_path="preprocessor")
+
+    mlflow.xgboost.log_model(booster, artifact_path="models_mlflow")
+```
+
+### Using a saved model to make predictions
+This section is also shown with the logged artifacts in the mlflow ui
+
+- `logged_model`: unique uri for the model
+    - Format: run / run-id / models-mlflow
+
+**Predict on a Spark DataFrame:**
+```python
+
+import mlflow
+from pyspark.sql.functions import struct, col
+logged_model = 'runs:/a8beaa704725443db702c63ffc026972/models_mlflow'
+
+# Load model as a Spark UDF. Override result_type if the model does not return double values.
+loaded_model = mlflow.pyfunc.spark_udf(spark, model_uri=logged_model, result_type='double')
+
+# Predict on a Spark DataFrame.
+df.withColumn('predictions', loaded_model(struct(*map(col, df.columns))))
+```
+
+**Predict on a Pandas DataFrame:**
+```python
+import mlflow
+logged_model = 'runs:/a8beaa704725443db702c63ffc026972/models_mlflow'
+
+# Load model as a PyFuncModel.
+loaded_model = mlflow.pyfunc.load_model(logged_model)
+
+# Predict on a Pandas DataFrame.
+import pandas as pd
+loaded_model.predict(pd.DataFrame(data))
+```
+
+**Example with XGBoost-Model**
+```python
+logged_model = "runs:/a8beaa704725443db702c63ffc026972/models_mlflow"
+
+### Load model as PyFuncModel ###
+
+loaded_model = mlflow.pyfunc.load_model(logged_model)
+print(loaded_model)
+# Output:
+# mlflow.pyfunc.loaded_model:
+#  artifact_path: models_mlflow
+#  flavor: mlflow.xgboost
+#  run_id: a8beaa704725443db702c63ffc026972
+
+### Loading the model as an xgboost function ###
+
+xgboost_model = mlflow.xgboost.load_model(logged_model)
+print(xgboost_model)
+# Output:
+# <xgboost.core.Booster at 0x7f1df82752b0>
+
+# Now you also can access all the methods of the xgboost-object
+y_pred = xgboost_model.predict(valid)
+print(y_pred[:10])
+```
+
+### Summary
+
+- **`Logging models in MLflow (2 Options)`**
+    - <u>Log model as an artifact</u>
+    ```python
+    mlflow.log_artifact("mymodel", artifact_path="models")
+    ```
+    - <u>Log model using the method `log_model`</u>
+    ```python
+    mlflow.<framework>.log_model(model, artifact_path="models")
+    ```
+![mlflow-formats](imgs/mlflow_format.png)
+
 
 ## 2.5 Model registry
 
+<p align="center">
+    <img src="imgs/new_model.png", style="max-width: 60%; height: auto;">
+    <figcaption align="center">Deploy pls! What do?</figcaption>
+</p>
+
+### Motivation
+- If a coworker sends you a model, you dont know much about it
+    - What was the code used for training?
+    - Is preprocessing required?
+    - Hyperparameters? Dataset?
+    - ...
+- This should all be stored inside a tool for experiment tracking.
+- A `Model Registry` would make this easier
+
+### Model Registry
+- `Tracking Server` for tracking model training and execution inside `runs`
+- If you decide that some of the model are ready for production, register them in the `Model Registry`
+    - Deployment engineers will look there for models to use
+
+![registry](imgs/registry.png)
+
+- Models can switch categories inisde the model registry, s.t. an archived model can be moved to production again
+- `Model Registry` alone cant deploy (only labeling), and requires some CI/CD code to do the actual deployment
+
+### Model Analysis
+- What do you have to look at when deciding what model to deploy?
+    - Metrics
+    - Time to train
+    - Model size
+
+After choosing, you have to click on the button on the upper right
+![registry](imgs/register.png)
+
+#### Registering 2 different models
+![reg1](imgs/reg1.png)
+![reg2](imgs/reg2.png)
+The second model (registered also as `nyc-taxi-regressor`) has the version 2.
+
+#### Looking into the Model Registry (Model Tab)
+![model-reg](imgs/model-reg.png)
+
+#### Staging a Model
+![staging](imgs/staging-model.png)
+
+### Using Model Registry inside of Jupyter Notebook
+
+**See here**: [model-registry.ipynb](./model-registry.ipynb)
+
+### **`MlflowClient`** Class
+- A client of ...
+    - an *MLflow* Tracking Server that creates and manages experiments and runs
+    - an *MLflow* Registry Server that creates and manages registered models and model versions.
+- To instantiate it, we pass a tracking URI and/or registry URI:
+```python
+from mlflow.tracking import MlflowClient
+client = MlflowClient(tracking_uri="sqlite:///mlflow.db")
+```
+
+### Model management in MLflow
+- *Model Registry* is
+    - Centralized model store
+    - Set of API's
+    - an UI
+
+These tools can be used to manage the full lifecycle of an MLflow Model.
+
+It provides:
+- Model lineage
+- Model versioning
+- Stage transitions
+- Annotations
+
 ## 2.6 MLflow in practice
 
+
+
 ## 2.7 MLflow: benefits, limitations and alternatives
+
+### Different Scenarios for running MLflow
+- <u>Lets consider 3 scenarios:</u>
+    - Single Data Scientist, participating in a ML competition
+    - Cross-functional team with one Data Scientist working on an ML model
+    - Multiple Data Scientists working on multiple ML models
+
+### Configuring MLflow
+- **Backend Store** (saves all information from the runs)
+    - local filesystem (if nothing specified)
+    - SQLAlchemy compatible DB (e.g. SQLite)
+- **Artifact Store**
+    - local filesystem (if nothing specified)
+    - remote (e.g. s3 bucket)
+- **Tracking Server**
+    - no tracking server
+    - localhost
+    - remote
+
+### Examples for the 3 scenarios
+For mor information look into the 3 notebooks:
+- Scenario 1: [scenario-1](running-mlflow-examples/scenario-1.ipynb)
+- Scenario 2: [scenario-2](running-mlflow-examples/scenario-2.ipynb)
+- Scenario 3: [scenario-1](running-mlflow-examples/scenario-3.ipynb)
+
 
 ## 2.7 Homework
 

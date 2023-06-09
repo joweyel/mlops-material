@@ -577,6 +577,7 @@ For mor information look into the 3 notebooks:
 - Scenario 2: [scenario-2](running-mlflow-examples/scenario-2.ipynb)
 - Scenario 3: [scenario-1](running-mlflow-examples/scenario-3.ipynb)
 
+For Scenario 3, you have to follow the instructions here: [`mlflow_on_aws.md`](https://github.com/joweyel/mlops-zoomcamp/blob/main/02-experiment-tracking/mlflow_on_aws.md)
 
 ## 2.7 Homework
 

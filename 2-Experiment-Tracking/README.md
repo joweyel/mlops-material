@@ -549,14 +549,6 @@ It provides:
 
 ## 2.6 MLflow in practice
 
-For more information see the following video: [MLOps Zoomcamp 2.6 - MLflow in practice
-](https://www.youtube.com/watch?v=1ykg4YmbFVA&list=PL3MmuxUbc_hIUISrluw_A7wDSmfOhErJK&index=14) and the Notebooks for the scenarios.
-
-### Examples for the 3 scenarios
-For mor information look into the 3 notebooks:
-- Scenario 1: [scenario-1](running-mlflow-examples/scenario-1.ipynb)
-- Scenario 2: [scenario-2](running-mlflow-examples/scenario-2.ipynb)
-- Scenario 3: [scenario-1](running-mlflow-examples/scenario-3.ipynb)
 
 
 ## 2.7 MLflow: benefits, limitations and alternatives
@@ -579,6 +571,13 @@ For mor information look into the 3 notebooks:
     - localhost
     - remote
 
+### Examples for the 3 scenarios
+For mor information look into the 3 notebooks:
+- Scenario 1: [scenario-1](running-mlflow-examples/scenario-1.ipynb)
+- Scenario 2: [scenario-2](running-mlflow-examples/scenario-2.ipynb)
+- Scenario 3: [scenario-1](running-mlflow-examples/scenario-3.ipynb)
+
+For Scenario 3, you have to follow the instructions here: [`mlflow_on_aws.md`](https://github.com/joweyel/mlops-zoomcamp/blob/main/02-experiment-tracking/mlflow_on_aws.md)
 
 ## 2.7 Homework
 

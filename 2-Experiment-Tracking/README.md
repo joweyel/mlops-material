@@ -549,10 +549,6 @@ It provides:
 
 ## 2.6 MLflow in practice
 
-
-
-## 2.7 MLflow: benefits, limitations and alternatives
-
 ### Different Scenarios for running MLflow
 - <u>Lets consider 3 scenarios:</u>
     - Single Data Scientist, participating in a ML competition
@@ -575,9 +571,59 @@ It provides:
 For mor information look into the 3 notebooks:
 - Scenario 1: [scenario-1](running-mlflow-examples/scenario-1.ipynb)
 - Scenario 2: [scenario-2](running-mlflow-examples/scenario-2.ipynb)
-- Scenario 3: [scenario-1](running-mlflow-examples/scenario-3.ipynb)
+- Scenario 3: [scenario-3](running-mlflow-examples/scenario-3.ipynb)
 
-For Scenario 3, you have to follow the instructions here: [`mlflow_on_aws.md`](https://github.com/joweyel/mlops-zoomcamp/blob/main/02-experiment-tracking/mlflow_on_aws.md)
+<u>**For Scenario 3**</u>, you have to follow the instructions here: [`mlflow_on_aws.md`](https://github.com/joweyel/mlops-zoomcamp/blob/main/02-experiment-tracking/mlflow_on_aws.md)
+- You need EC2, RDS and S3
+- `Important for Scenario 3 from Section 2.7`:
+    - Use access key ID and Secret Access Key of IAM user to log in with the command
+        ```shell
+        aws configure
+        ```
+    - The IAM User should have access S3 activated in the **Permission Policies**
+    - Starting the MLflow-Server on AWS
+        ```sh
+        mlflow server -h 0.0.0.0 -p 5000 --backend-store-uri postgresql://<db-user>:<db-password>@<db-endpoint>:5432/<db-name> --default-artifact-root s3://<s3-bucket-name>
+        ```
+    - Use the `Public IPv4 DNS`-Address and port 5000 to see the MLflow UI in your browser
+        ```shell
+        http://<EC2_PUBLIC_DNS>:5000
+        ```
+![aws-mlops](imgs/mlflow_aws.png)
+
+- After running the Training-Code of the Scenario 3 Notebook you can see the results on the MLflow UI on AWS.
+![aws-experiment](imgs/aws_experiment.png)
+
+## 2.7 MLflow: benefits, limitations and alternatives
+
+### Benefits
+- Easily deployed to the clouds
+- <u>**Benefits**</u>
+    - Sharing of expriments
+    - Colaboration to build and deploy models
+    - More visibility of DS efforts
+![tracking-server](imgs/tracking_server.png)
+
+### Issues (with running a shared / remote MLflow server)
+- <u>Security</u>
+    - Restrict Access to the Server (e.g. through VPN)
+- <u>Scalability</u>
+    - Check `Deploy MLflow on AWS Fargate`
+    - Check `MLflow at Company Scale` by Jean-Denis Lesage
+- <u>Isolation</u> (Experiments can get messy pretty quickly)
+    - Define standards for naming experiments, models and default-tags
+    - Restrict access to artifacts (different `s3` Buckets in different AWS Accounts)
+
+## Limitations (and when not to use MLflow)
+- <u>Authentication & Users</u>: FOSS-Version of MLflow does not provide any authentication
+- <u>Data Versioning</u>: MLflow does not provide a built-in solution, but has a few ways to deal with this problem. Is required for reproducibility.
+- <u>Model / Data Monitoring & Alerting</u>: Outside of MLflow Scope. There are more suitable Tools for this, like Weights and Biases [W&B-Websize](https://wandb.ai/site)
+
+## MLflow alternatives (paid, but free for individual use)
+- Neptune
+- Comet
+- Weights & Biases
+- many more
 
 ## 2.7 Homework
 

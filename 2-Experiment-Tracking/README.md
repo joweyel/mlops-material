@@ -549,6 +549,14 @@ It provides:
 
 ## 2.6 MLflow in practice
 
+For more information see the following video: [MLOps Zoomcamp 2.6 - MLflow in practice
+](https://www.youtube.com/watch?v=1ykg4YmbFVA&list=PL3MmuxUbc_hIUISrluw_A7wDSmfOhErJK&index=14) and the Notebooks for the scenarios.
+
+### Examples for the 3 scenarios
+For mor information look into the 3 notebooks:
+- Scenario 1: [scenario-1](running-mlflow-examples/scenario-1.ipynb)
+- Scenario 2: [scenario-2](running-mlflow-examples/scenario-2.ipynb)
+- Scenario 3: [scenario-1](running-mlflow-examples/scenario-3.ipynb)
 
 
 ## 2.7 MLflow: benefits, limitations and alternatives
@@ -570,12 +578,6 @@ It provides:
     - no tracking server
     - localhost
     - remote
-
-### Examples for the 3 scenarios
-For mor information look into the 3 notebooks:
-- Scenario 1: [scenario-1](running-mlflow-examples/scenario-1.ipynb)
-- Scenario 2: [scenario-2](running-mlflow-examples/scenario-2.ipynb)
-- Scenario 3: [scenario-1](running-mlflow-examples/scenario-3.ipynb)
 
 
 ## 2.7 Homework

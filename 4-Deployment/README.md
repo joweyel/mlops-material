@@ -56,6 +56,63 @@ Initially you have to start an MLflow server with the following command
 mlflow --server --backend-store-uri=sqlite:///mlflow.db --default-artifact-root=s3://<your-s3-bucket>
 ```
 
+- As model this time a `random forest` model is chosen. The code can be found in [random-forest.ipynb](web-service/random-forest.ipynb).
+- Now you have to go to the Mlflow UI and obtain the `run_id` of the trained model. This `run_id` will be used in a `flask` application.
+- The next step is to modify the `test.py` and `predict.py` from the `web-service` folder.
+
+- The following code is added to `predict.py` s.t. it can be used with MLflow:
+```python
+import pickle
+import mlflow
+from mlflow.tracking import MlflowClient
+from flask import Flask, request, jsonify
+
+# Get connected!
+RUN_ID = "d0d81ceebeac478cbd2f2b5ab20ec22f"
+MLFLOW_TRACKING_URI = "http://127.0.0.1:5000"
+
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+client = MlflowClient(tracking_uri=MLFLOW_TRACKING_URI)
+
+# Download and load the DictVectorizer
+path = client.download_artifacts(run_id=RUN_ID, path="dict_vectorizer.bin")
+print(f"Downloading the dict vectorizer to {path}")
+with open(path, "rb") as f_in:
+    dv = pickle.load(f_in)
+
+# Load the trained sklearn-model
+logged_model = f'runs:/{RUN_ID}/model'
+model = mlflow.pyfunc.load_model(logged_model)
+```
+- Start [`predict.py`](web-service-mlflow/predict.py) and run [`test.py`](web-service-mlflow/test.py), to see if it returns a value.
+- The code abover is relatively convoluted and complex. Therefore it is desired to simplify the process of obtaining the model and other artigacts.
+    - We want to define the model and Dictionary Vectorizer as a Pipeline and log the pipeline as artifact instead of `model` and `dv`
+    - The pipeline will be stored in the MLflow model-registry
+    - See [`random-forest.ipynb`](web-service-mlflow/random-forest.ipynb) for the implementation
+    - Changes are made to [`predict.py`](web-service-mlflow/predict.py) in the `predict` function
+- There could arise problems when the MLflow Tracking-Server is not running. 
+    - To solve this you can directly access the model from an S3 Bucket.
+    - It is also advisable to set the `RUN_ID`'s as environment variables. Those can be set accordingly when needed. In the example the variable has to be set in both consoles, where `test.py` and `predict.py` are called.
+    ```bash
+    export RUN_ID="10f4197008104ad183466cdb19e26c4e"
+    ```
+### Now you can package the new model to docker (Still under Construction)
+
+- The previoulsy created Dockerfile has to be adapted to work with the new version of web-service. The new Dockefile can be found [here](web-service-mlflow/Dockerfile) (TODO: solving package missmatches).
+- To build a container with S3 Access you have to provide the credentials
+    - Set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` as environmental variables
+    - Run the build process:
+      ```bash
+      docker build -t ride-duration-prediction-service:v2 --build-arg AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --build-arg AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY .
+      ```
+    - Run the docker container:
+    ```bash
+    docker run -it --rm -p 9696:9696 ride-duration-prediction-service:v2
+    ```
+
+
+
+
 ## 4.4 (Optional) Streaming: Deploying models with Kinesis and Lambda 
 
 ## 4.5 Batch: Preparing a scoring script

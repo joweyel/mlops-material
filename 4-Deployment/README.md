@@ -51,6 +51,11 @@ The content of this section can be found [here](web-service/README.md).
 
 ## 4.3 Web-services: Getting the models from the model registry (MLflow)
 
+Initially you have to start an MLflow server with the following command
+```bash
+mlflow --server --backend-store-uri=sqlite:///mlflow.db --default-artifact-root=s3://<your-s3-bucket>
+```
+
 ## 4.4 (Optional) Streaming: Deploying models with Kinesis and Lambda 
 
 ## 4.5 Batch: Preparing a scoring script

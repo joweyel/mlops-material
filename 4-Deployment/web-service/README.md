@@ -1,6 +1,15 @@
 ## Deploying a model as a web-service
 
-- Creating a virtual environment with Pipenv
+### Creating a virtual environment with Pipenv
+
+<!-- 
+```bash
+pipenv install scikit-learn==1.2.2 flask --python=3.9
+# Opening the environment with
+pipenv shell
+``` 
+-->
+
 ```bash
 pipenv install scikit-learn==1.2.2 flask --python=3.9
 # Opening the environment with
@@ -9,50 +18,57 @@ pipenv shell
 
 - The generated Pipfile contains the following
 
-    ```
-    [[source]]
-    url = "https://pypi.org/simple"
-    verify_ssl = true
-    name = "pypi"
+```log
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
 
-    [packages]
-    scikit-learn = "==1.2.2"
-    flask = "*"
- 
-    [dev-packages]
+[packages]
+scikit-learn = "==1.2.2"
+flask = "*"
+requests = "*"
+gunicorn = "*"
+numpy = "==1.26.4"
 
-    [requires]
-    python_version = "3.9"
-    python_full_version = "3.9.16"
-    ```
-- Creating a script for prediction  
+[dev-packages]
+requests = "*"
+
+[requires]
+python_version = "3.9"
+python_full_version = "3.9.19"
+```
+To avoid `scikit-learn` and `numpy` errors concerning `numpy.dtype` the last version before `numpy 2.0.0` is used.
+
+### Creating a script for prediction  
 ```bash
 touch predict.py test.py
 ```
 
-- Putting the script into a Flask app
-    - See [predict.py](predict.py) and [test.py](test.py)
-    - Using a production Server instead of development Server (locally)
-        - ```bash
-          pipenv install gunicorn
-          ```
-        - Running the `gunicorn` server
-          ```bash
-          # run the app from predict file
-          gunicorn --bind=0.0.0.0:9696 predict:app
-          python3 test.py
-          ```
-    - There could arise errors because libraries are not available in base-python environment and the web-app environment
-        - `requests`-packag is only required for development
-        ```bash
-        pipenv install --dev requests
-        ```
+### Putting the script into a Flask app
 
-- Packaging the app to Docker
+- See [predict.py](predict.py) and [test.py](test.py) for exemplary scripts for querying a model for prediction
+- Using a production Server instead of development Server (locally)
+    - ```bash
+      pipenv install gunicorn
+      ```
+    - Running the `gunicorn` server
+      ```bash
+      # run the app from predict file
+      gunicorn --bind=0.0.0.0:9696 predict:app
+      python3 test.py
+      ```
+- There could arise errors because libraries are not available in base-python environment and the web-app environment
+    - `requests`-packag is only required for development
+    ```bash
+    pipenv install --dev requests
+    ```
 
-- Building the `Dockerfile`
+### Packaging the app to Docker
+
+- Building the `Dockerfile` as a self-contained and portable environment. 
 ```dockerfile
-FROM python:3.9.16-slim  # use a specific python version
+FROM python:3.9.19-slim  # use a specific python version
 
 # Updata pip and install pipenv
 RUN pip install -U pip 
@@ -88,4 +104,9 @@ docker build -t ride-duration-prediction-service:v1 .
 # --rm: Removes the volume after running
 # -p: Port forwarding
 docker run -it --rm -p 9696:9696 ride-duration-prediction-service:v1
+```
+
+- Testing the dockerized model with test-example:
+```bash
+python3 test.py
 ```

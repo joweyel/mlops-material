@@ -13,39 +13,42 @@
 - **Operate**
     - Deploy trained model
 
+**Types of Deployments: Overview**
 
 ![deploying models](imgs/deploy.png)
 
 - **`Batch Mode`**
     - Run the model regularly (hourly, daily, monthly, etc.)
-    - Get the data from the previous time interval
+    - Get the data from the previous time interval (not real-time)
     - Save the results into database of predictions
     - Often used for marketing related tasks
 
 ![scoring-job](imgs/scoring_job.png)
 
-### Batch Mode - Marketin Example
+### Batch Mode - Marketing Example
 
 - **Case**: User churning from Taxi to Uber
 
 ![example](imgs/marketing_example.png)
 
-### Web Service - Trip Duration Example
+### Web Service (1-to-1) - Trip Duration Example
 
 ![web-service](imgs/web_service.png)
-- <u>1-to-1</u> Relationship (Client & Server)
+- <u>1-to-1</u> Relationship (Client and Server)
 - A user of an taxi-app wants to know the approximate duration of a trip immediately
-- Waiting is not viable here and a Webservice has to be ready to go and predict
+- Waiting is not viable here and a web service has to be ready to go and predict
+- More or less real time
 
-### Streaming - Taxi Ride
+### Streaming (1-to-N) - Taxi Ride
 ![streaming](imgs/streaming.png)
-- <u>1-to-Many</u> Relationship
+- <u>1-to-Many</u> Relationship (Producer and Consumer)
 - Multiple services (consumers) react to streams of events
+- The consumers can do predictions for specific tasks (based on the incoming event) and return it to the producer of the data-input
 
 
 ## 4.2 Web-services: Deploying models with Flask and Docker
 
-Take a look at the Content from the ML-Zoomcamp about deplying models [here](https://github.com/alexeygrigorev/mlbookcamp-code/tree/master/course-zoomcamp/05-deployment).
+Take a look at the content from the ML-Zoomcamp about deplying models [here](https://github.com/alexeygrigorev/mlbookcamp-code/tree/master/course-zoomcamp/05-deployment) for a more comprehensive overview over the topic.
 
 The content of this section can be found [here](web-service/README.md).
 
@@ -91,12 +94,12 @@ model = mlflow.pyfunc.load_model(logged_model)
     - See [`random-forest.ipynb`](web-service-mlflow/random-forest.ipynb) for the implementation
     - Changes are made to [`predict.py`](web-service-mlflow/predict.py) in the `predict` function
 - There could arise problems when the MLflow Tracking-Server is not running. 
-    - To solve this you can directly access the model from an S3 Bucket.
+    - To solve this you can directly access the model from an *S3* Bucket.
     - It is also advisable to set the `RUN_ID`'s as environment variables. Those can be set accordingly when needed. In the example the variable has to be set in both consoles, where `test.py` and `predict.py` are called.
     ```bash
     export RUN_ID="10f4197008104ad183466cdb19e26c4e"
     ```
-### Now you can package the new model to docker (Still under Construction)
+<!-- ### Now you can package the new model to docker (Still under Construction)
 
 - The previoulsy created Dockerfile has to be adapted to work with the new version of web-service. The new Dockefile can be found [here](web-service-mlflow/Dockerfile) (TODO: solving package missmatches).
 - To build a container with S3 Access you have to provide the credentials
@@ -108,32 +111,25 @@ model = mlflow.pyfunc.load_model(logged_model)
     - Run the docker container:
     ```bash
     docker run -it --rm -p 9696:9696 ride-duration-prediction-service:v2
-    ```
+    ``` -->
+
+## 4.4 Streaming: Deploying models with Kinesis and Lambda
+
+**Machine Learning for Streaming**
+- Scenario
+- Creating the role
+- Create a `Lambda` Function and test it
+- Create a `Kinesis` stream
+- Connect the function to the stream
+- Send the records
+
+**Links:**
+- [Tutorial: Using Amazon Lambda with Amazon Kinesis](https://docs.aws.amazon.com/lambda/latest/dg/with-kinesis.html)
+
+## TODO
 
 
-
-
-## 4.4 (Optional) Streaming: Deploying models with Kinesis and Lambda 
-
-## 4.5 Batch: Preparing a scoring script
-
-## 4.6 MLOps Zoomcamp 4.6 - Batch: Scheduling batch scoring jobs with Prefect
-
-The unit 4.6 consists of multiple videos:
-
-## 4.7 Choosing the right way of deployment
-
-TODO / COMING SOON
-
-## 4.8 Homework
-
-
-## Notes
-
-Did you take notes? Add them here:
-
-* [Notes on model deployment (+ creating a modeling package) by Ron M.](https://particle1331.github.io/inefficient-networks/notebooks/mlops/04-deployment/notes.html)
-* [Notes on Model Deployment using Google Cloud Platform, by M. Ayoub C.](https://gist.github.com/Qfl3x/de2a9b98a370749a4b17a4c94ef46185)
-* [Week4: Notes on Model Deployment by Bhagabat](https://github.com/BPrasad123/MLOps_Zoomcamp/tree/main/Week4)
-* [Week 4: Deployment notes by Ayoub.B](https://github.com/ayoub-berdeddouch/mlops-journey/blob/main/deployment-04.md)
-* Send a PR, add your notes above this line
+<!-- ## 4.5 Batch - Preparing a scoring script
+- Turning the notebook for training the model to a notebook for applying the model
+- Turn the notebook into a script
+- Clean it and parameterize it -->

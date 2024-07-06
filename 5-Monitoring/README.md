@@ -199,16 +199,80 @@ There is not yet a dashboard present in the workspace. For this multiple panels 
 
 <a id="6-dummy"></a>
 ## 5.6 Dummy monitoring
+In this section some dummy metrics are calculated and loaded into a database, which is then accessed through `Grafana` later. For the aforementioned tasks, the python script [`dummy_metrics_calculation.py`](taxi_monitoring/dummy_metrics_calculation.py) is created. The script should be able to create a database, tables and add metrics to them row by row.
 
+Code for connecting to the database:
+```python
+def prep_db():
+    # Connect to the postgres database that is defined in the prev. used docker-compose file
+    with psycopg.connect("host=localhost port=5432 user=postgres password=example", autocommit=True) as conn:
+        res = conn.execute("SELECT 1 FROM pg_database WHERE datname='test'")
+        if len(res.fetchall()) == 0:  # Create database if no database is available
+            conn.execute("create database test;")
+
+```
+
+Code for filling the database with dummy values:
+```python
+def calculate_dummy_metrics_postgresql(curr):
+    value1 = random.randint(0, 1000)
+    value2 = str(uuid.uuid4())
+    value3 = random.random()
+    curr.execute(
+        "INSERT INTO dummy_metrics(timestamp, value1, value2, value3) % (%s, %s, %s, %s)",
+        (datetime.datetime.now(pytz.timezone("Europe/Berlin")), value1, value2, value3)
+    )
+```
+
+Main function with loop for putting data in the database:
+```python
+def main():
+    prep_db()
+    last_send = datetime.datetime.time() - datetime.timedelta(seconds=10)
+    with psycopg.connect("host=localhost port=5432 dbname=test user=postgres password=example", autocommit=True) as conn:
+        for i in range(0, 100):
+            with conn.cursor() as curr:
+                calculate_dummy_metrics_postgresql(curr)
+
+            new_send = datetime.datetime.now()
+            seconds_elapsed = (new_send - last_send).total_seconds()
+            if seconds_elapsed < SEND_TIMEOUT:
+                time.sleep(SEND_TIMEOUT - seconds_elapsed)
+            while last_send < new_send:
+                last_send = last_send + datetime.timedelta(seconds=10)
+            logging.info("data sent")
+```
+
+To run the code, the docker-compose has to be started s.t. the code can access to its ressources:
+```bash
+docker-compose up
+# In another console (or with `docker-compose up -d` in same console)
+python3 dummy_metrics_calculation.py
+```
+
+After inserting some values into the database, you can log-in (using credentials from [docker-compose.yml](taxi_monitoring/docker-compose.yml)) and access the database content via `Adminer` over the browser at [localhost:8080](http://localhost:8080/). You should be able to find the newly created database `test` and the `dummy_metrics` table.
+
+![adminer_db](imgs/adminer_db.png)
+
+The data in the postgres database can now be used for a `Grafana` dashboard.
+1. Open `Grafana` in the browser at [localhost:3000](http://localhost:3000/) and log in
+2. Create a dashboard and access the datasource
 
 <a id="7-quality-monitoring"></a>
 ## 5.7 Data quality monitoring
+This section is mostly similar to the previous section `5.6 Dummy Monitoring` but with the difference that `Evidently` was used. The code can be fond here: [`evidently_metrics_calculation.py`](taxi_monitoring/evidently_metrics_calculation.py).
 
 <a id="8-grafana-dashboard"></a>
 ## 5.8 Save Grafana Dashboard
 
+For saving Grafana dashboards some more configurations are reqired. This sections contains the creation of additional configs and detailed instructions can be found here: [MLOps Zoomcamp 5.8 - Save Grafana Dashboard](https://www.youtube.com/watch?v=-c4iumyZMyw) 
+
+
 <a id="9-debugging"></a>
 ## 5.9 Debugging with test suites and reports
+To find out what's wrong with data or the model, monitoring is used. This shows the moment of time where something went wrong. Now `Debugging` should help find the solution to the occured problem. Debugging in this context means to obtain values and visualizations s.t. you can come up with a possible hypothesis of what happened. For this purpose the notebook [`debugging_nyc_taxi_data.ipynb`](taxi_monitoring/debugging_nyc_taxi_data.ipynb) is used.
+
 
 <a id="10-homework"></a>
 ## 5.10 Homework
+

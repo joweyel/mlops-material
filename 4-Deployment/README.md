@@ -126,7 +126,37 @@ model = mlflow.pyfunc.load_model(logged_model)
 **Links:**
 - [Tutorial: Using Amazon Lambda with Amazon Kinesis](https://docs.aws.amazon.com/lambda/latest/dg/with-kinesis.html)
 
-## TODO
+### Granting Access and defining `AWSLambdaKinesisExecutionRole`
+To work with AWS Lambda and Kinesis, it is required to attach a specific role to the (IAM) user that utilizes the services. You also have to have access to the AWS Lambda and Kinesis services already granted.
+- Go to `IAM` in the AWS web-ui and choose `Access management` $\rightarrow$ `Roles` and `Create role`
+- **Step 1: Select trusted entity** 
+  - As `Trusted entity type` select `AWS service` and as `Use case` select `Lambda`
+- **Step 2: Add permissions**
+  - In `Permissions policies` select `AWSLambdaKinesisExecutionRole`
+- **Step 3: Name, review, and create**
+  - As `Role name` use `lambda-kinesis-role`
+  - Click `Create role` and your done!
+
+### Creating the AWS Lambda function
+1. Go to `Lambda` in the AWS web-ui and click `Create functions`
+   - Select `Author from scratch` 
+   - **Function name**: `ride-duration-prediction-test`
+   - **Runtime**: `Python 3.9`
+   - **Architecture**: `x86_64`
+   - `Change default execution role` should be `Use an existing role` (`lambda-kinesis-role`)
+  
+### Creating `Kinesis` Datastream and connecting to it
+2. Go to `Kinesis` on the AWS web-ui and click `Create data stream`
+   - Relevant documentation: [Create a Kinesis stream](https://docs.aws.amazon.com/en_us/lambda/latest/dg/with-kinesis-example.html)
+   - Name it `ride_events`, choose `Provisioned` mode and set `Provisioned shards` to 1 (can vary depending on anticipated traffic)
+   - Click `Create data stream` and the stream will be created
+
+### Connect (Lambda) to Kinesis
+3. Add a trigger to your Lambda function and connect the previously created Kinesis stream to it
+   - For **Kinesis stream** choose `kinesis/ride_events`
+   - The rest can stay the same
+  
+### Send a test event to the stream
 
 
 <!-- ## 4.5 Batch - Preparing a scoring script

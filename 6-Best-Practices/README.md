@@ -10,6 +10,38 @@
 
 <a id="1-pytest"></a>
 ## 6.1 Testing Python code with pytest
+In this section the code that was used for predicting on AWS using Kinesis and Lambda from Section 4 of the class, will be tested. The original code can be found here: [streaming](https://github.com/joweyel/mlops-zoomcamp/tree/main/04-deployment/streaming). The modified version of the code can be found in the directory [code](./code/).
+The goal of this section is to test the code with unit tests.
+
+Everything here is done in the [code](./code/) directory.
+ 
+Installing the *Pipenv* and test-dependencies:
+```bash
+pipenv install
+pipenv install --dev pytest
+```
+For testing with VS-Code: 
+- Install the `Python`-extension
+- Select python interpreter with `[Ctrl]+[Shift]+[P]`, then search for `Python: Select Interpreter`
+  - *Manually configure the interpreter*
+    - Find out path to pipenv: `pipenv --venv`
+    - Insert path into `+ Enter interpreter path` and append `/bin/python`
+  - *Find Interpreter in Interpreter list (is often already there)*
+    - Just click on it!
+  
+Now open the pipenv and run pytest.
+```bash
+pipenv shell
+pytest
+```
+
+The next step is to open the Test-Sidebar in VS-Code (the retort symbol)
+- Click on `Configure Python Tests` an select the `tests` directory
+
+Now it's time to create tests:
+
+
+
 
 <a id="2-integration-test"></a>
 ## 6.2 Integration tests with docker-compose

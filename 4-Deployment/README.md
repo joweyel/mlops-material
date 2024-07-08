@@ -157,8 +157,105 @@ To work with AWS Lambda and Kinesis, it is required to attach a specific role to
    - The rest can stay the same
   
 ### Send a test event to the stream
+For this see the follwoing [README](streaming/README.md)
 
+### Create new Lambda from Container Image
+In this section, the a Lambda function is connected to the docker container that was prevoiously pushed to AWS ECR
 
+1. Create new Lambda function
+   - Choose `Container Image`
+   - **Function name**: `ride-durection-prediction`
+   - **Container image URI**: Browse and select `duration-model` or a URI like this `886638369043.dkr.ecr.us-east-1.amazonaws.com/duration-model:v1`
+   - In **Change default execution role**
+     - Choose `Use an existing roll` and select `lambda-kinesis-role`
+
+2. Add environment variables at `[Configuration] -> Environment variables`
+   - **PREDICTIONS_STREAM_NAME**: `ride_predictions`
+   - **RUN_ID**: `10f4197008104ad183466cdb19e26c4e` (change to your run id)
+3. Add trigger to Kinesis stream
+   - Select Kinesis and then the stream `ride_events`
+
+4. Delete the old Lambda function that was used for testing
+
+5. Test the Lambda function with the following inputs:
+   ```bash
+   KINESIS_STREAM_INPUT=ride_events
+   aws kinesis put-record \
+    --stream-name ${KINESIS_STREAM_INPUT} \
+    --partition-key 1 \
+    --cli-binary-format raw-in-base64-out \
+    --data '{
+        "ride": {
+            "PULocationID": 130,
+            "DOLocationID": 205,
+            "trip_distance": 3.66
+        }, 
+        "ride_id": 156
+    }'
+   ```
+   - There is still a problem of Lambda not having access to S3 ressources
+6. Add permissions for S3 access to `lambda-kinesis-role` so that the Lambda function can access the data
+   - Go to `IAM`, then `Roles` and search for `lambda-kinesis-role`
+   - Select `Add permissions` and choose `Create inline policy`
+   - Select `List` and `Read` permisiions
+   - In the `Resources` menu click on `Add ARNs` in the **bucket** part
+     - Provide the path to the bucket 
+   - In the `Resources` menu click on `Add ARNs` in the **object** part
+     - Provide the path to the bucket in `Resource bucket name`
+     - In `Resource object name` select `Any object name`
+   - With a little bit of shortening (while retaining the functionality) you will get something like this:
+     ```json
+     {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+              "s3:Get*",
+              "s3:List*"
+            ],
+            "Resource": [
+              "arn:aws:s3:::mlflow-artifacts-remote-jw ",
+              "arn:aws:s3:::mlflow-artifacts-remote-jw/*"
+            ]
+          }
+        ]
+     }
+     ```
+   - As policy name use (Exemplary! Replace with your S3 bucket name): `read_permission_mlflow-artifacts-remote-jw`
+   - Click `Create policy` and you are done!
+7. Testing the Lambda Function
+   - Create a Test with the name of `test` and provide the following input:
+     ```json
+     {
+        "Records": [
+            {
+                "kinesis": {
+                    "kinesisSchemaVersion": "1.0",
+                    "partitionKey": "1",
+                    "sequenceNumber": "49630081666084879290581185630324770398608704880802529282",
+                    "data": "ewogICAgICAgICJyaWRlIjogewogICAgICAgICAgICAiUFVMb2NhdGlvbklEIjogMTMwLAogICAgICAgICAgICAiRE9Mb2NhdGlvbklEIjogMjA1LAogICAgICAgICAgICAidHJpcF9kaXN0YW5jZSI6IDMuNjYKICAgICAgICB9LCAKICAgICAgICAicmlkZV9pZCI6IDI1NgogICAgfQ==",
+                    "approximateArrivalTimestamp": 1654161514.132
+                },
+                "eventSource": "aws:kinesis",
+                "eventVersion": "1.0",
+                "eventID": "shardId-000000000000:49630081666084879290581185630324770398608704880802529282",
+                "eventName": "aws:kinesis:record",
+                "invokeIdentityArn": "arn:aws:iam::886638369043:role/lambda-kinesis-role",
+                "awsRegion": "eu-west-1",
+                "eventSourceARN": "arn:aws:kinesis:us-east-1:886638369043:stream/ride_events"
+            }
+        ]
+     }
+     ```
+     - It will fail if the beginning since the model and other resources are not initialized after only 3 seconds
+     - Go to `Configuration -> General configuration -> Edit` and change the following parameter:
+       - **Memory**: `256`
+       - **Timeout**: `0 min 15 sec`
+     - Save the changed parameters
+     - Test again. It should work. Otherwise increase the time or memory a little bit, depending on the error.
+    
 <!-- ## 4.5 Batch - Preparing a scoring script
 - Turning the notebook for training the model to a notebook for applying the model
 - Turn the notebook into a script

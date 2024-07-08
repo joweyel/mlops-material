@@ -91,7 +91,7 @@ aws kinesis put-record \
 
 ```bash
 KINESIS_STREAM_OUTPUT='ride_predictions'
-SHARD='shardId-000000000000'
+SHARD='shardId-000000000000' 
 
 SHARD_ITERATOR=$(aws kinesis \
     get-shard-iterator \

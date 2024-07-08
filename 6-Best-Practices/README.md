@@ -10,7 +10,13 @@
 
 <a id="1-pytest"></a>
 ## 6.1 Testing Python code with pytest
-In this section the code that was used for predicting on AWS using Kinesis and Lambda from Section 4 of the class, will be tested. The original code can be found here: [streaming](https://github.com/joweyel/mlops-zoomcamp/tree/main/04-deployment/streaming). The modified version of the code can be found in the directory [code](./code/).
+In this section the code that was used for predicting on AWS using Kinesis and Lambda from Section 4 of the class, will be tested. The original code can be found here: [streaming](https://github.com/joweyel/mlops-zoomcamp/tree/main/04-deployment/streaming). 
+
+![section4_streaming](imgs/6_1_1_streaming_architecture.jpg)
+
+### Setup
+
+The modified version of the code can be found in the directory [code](./code/).
 The goal of this section is to test the code with unit tests.
 
 Everything here is done in the [code](./code/) directory.
@@ -28,6 +34,7 @@ For testing with VS-Code:
     - Insert path into `+ Enter interpreter path` and append `/bin/python`
   - *Find Interpreter in Interpreter list (is often already there)*
     - Just click on it!
+  - Create `tests` directory in the `code` directory
   
 Now open the pipenv and run pytest.
 ```bash
@@ -35,16 +42,29 @@ pipenv shell
 pytest
 ```
 
+### Configure PyTest
+
 The next step is to open the Test-Sidebar in VS-Code (the retort symbol)
 - Click on `Configure Python Tests` an select the `tests` directory
 
-Now it's time to create tests:
+Now it's time to test the cpde. The tests can be found in the files of the [`tests`](code/tests/)-directory. While the content from section 4's Streaming folder was initially used it was subsequently adapted to be more suitable to be tested.
 
-
-
+The relevant files of this sction are:
+- [lambda_function.py](code/lambda_function.py)
+- [model.py](code/model.py)
+- [model_test.py](code/tests/model_test.py)
+- [Dockerfile](code/Dockerfile)
+- [test_docker.py](code/test_docker.py)
+  
 
 <a id="2-integration-test"></a>
 ## 6.2 Integration tests with docker-compose
+
+**Types of testing:**
+- `Unit-Tests`: Tests a single small "unit" in the code usually functions, methods, etc. by themselves
+- `Integration-Tests`: Tests the integration of a code segment into the overall code s.t. the interaction of code with other components works as expected
+
+
 
 <a id="3-local-stack"></a>
 ## 6.3 Testing cloud services with LocalStack

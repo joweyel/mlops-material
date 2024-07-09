@@ -268,7 +268,34 @@ def get_model_location(run_id):
 - **`black`**: A code formatter for python code
 - **`isort`**: Library for sorting python imports according to some guideline + compatibility with `black`
 
+Parameterization of `black` is done via parameter or via `pyproject.toml`
+```bash
+black --line-length 80 --skip-string-normalization --target-version py39 
+```
 
+```ini
+[tool.black]
+line-length = 80
+target-version = ['py39']
+skip-string-normalization = true
+```
+
+Now `black` can be run with the following command:
+```bash
+black .  # already parameterized by `pyproject.toml` in [tool.black]
+```
+
+To apply `isort` the same syntax as black can be used:
+```bash
+isort . # already parameterized by `pyproject.toml` in [tool.isort]
+```
+
+### Conclusion
+Linting, formatting and sorting of imports can all be done automatically, given some rules. This makes them very easy to use in CI/CD pipelines, in which they are often used.
+- **Linting - `pylint`**: Assures code quality
+- **Formatting - `black`**: Assumes formatting according to a given set of rules
+- **Sorting - `isort`**: Sorts imports in the code according to a given set of rules
+  
 
 <a id="5-git"></a>
 ## 6.5 Git pre-commit hooks

@@ -69,6 +69,78 @@ The relevant files of this sction are:
 <a id="3-local-stack"></a>
 ## 6.3 Testing cloud services with LocalStack
 
+This section handles the testing of cloud ressurces that were left out in the unit- and integration-test sections. For this [localstack](https://github.com/localstack/localstack) is used.
+
+To incorporate `localstack` into the code, `docker-compose` is used. Therefore the previously used docker-compose configuration is extended by the service `kinesis`:
+
+```yaml
+services:
+  backend:
+    image: ${LOCAL_IMAGE_NAME}
+    ports:
+      - "8080:8080"
+    environment:
+      - PREDICTIONS_STREAM_NAME=ride_predictions
+      - TEST_RUN=True
+      - RUN_ID=Test123
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_PROFILE=mlflow-user
+      - MODEL_LOCATION=/app/model
+    volumes:
+      - ~/.aws:/root/.aws
+      - ./model:/app/model
+  kinesis:
+    image: localstack/localstack
+    ports: 
+      - 4566:4566
+    environment:
+      - SERVICES=kinesis
+```
+To pull the `localstack`-image (at first start) and to run the `kinesis`-service the following command has to be used:
+```bash
+docker-compose up kinesis
+```
+
+The goal now is to use local versions of AWS services, that are simulated by `localstack`. To see what `kinesis`-streams are currently running you can use this command:
+```bash
+aws kinesis list-streams
+```
+If there are any, you can delete them since they are not used here and are costing you money even in idle-state. If all streams are deleted you should get this result from `aws kinesis list-streams`:
+```json
+{
+    "StreamNames": [],
+    "StreamSummaries": []
+}
+```
+Now it's time to connect to the kinesis-stream that was started with the localstack-container.
+```bash
+aws --endpoint-url=http://localhost:4566 kinesis list-streams
+```
+If everything worked out, you should get this output:
+```json
+{
+    "StreamNames": []
+}
+```
+
+Now create a stream with localstack:
+```bash
+aws --endpoint-url=http://localhost:4566 \
+    kinesis create-stream \
+    --stream-name ride_predictions \
+    --shard-count 1
+```
+
+You should now see the strem in the stream list in localstack:
+```bash
+aws --endpoint-url=http://localhost:4566 kinesis list-streams
+{
+    "StreamNames": [
+        "ride_predictions"
+    ]
+}
+```
+
 <a id="4-linting"></a>
 ## 6.4 Code quality: linting and formatting
 

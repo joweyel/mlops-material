@@ -31,3 +31,18 @@ docker run -it --rm \
     -v $(pwd)/model:/app/model \
     stream-model-duration:v2
 ```
+
+### `localstack`
+
+List kinesis-streams in localstack
+```bash
+aws --endpoint-url=http://localhost:4566 kinesis list-streams
+```
+
+Create kinesis-stream in localstack
+```bash
+aws --endpoint-url=http://localhost:4566 \
+    kinesis create-stream \
+    --stream-name ride_predictions \
+    --shard-count 1
+```

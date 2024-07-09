@@ -4,8 +4,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - PREDICTIONS_STREAM_NAME=ride_predictions
-      # - TEST_RUN=True
+      - PREDICTIONS_STREAM_NAME=${PREDICTIONS_STREAM_NAME}
       - RUN_ID=Test123
       - AWS_DEFAULT_REGION=us-east-1
       - AWS_PROFILE=mlflow-user

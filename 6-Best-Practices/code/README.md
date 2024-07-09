@@ -46,3 +46,22 @@ aws --endpoint-url=http://localhost:4566 \
     --stream-name ride_predictions \
     --shard-count 1
 ```
+```bash
+export SHARD='shardId-000000000000'
+export PREDICTIONS_STREAM_NAME='ride_predictions'
+
+# Get shard iterator
+SHARD_ITERATOR=$(aws --endpoint-url=http://localhost:4566 \
+    kinesis get-shard-iterator \
+    --shard-id ${SHARD} \
+    --shard-iterator-type TRIM_HORIZON \
+    --stream-name ${PREDICTIONS_STREAM_NAME} \
+    --query 'ShardIterator' \
+)
+
+# Extracting records from shard
+RESULT=$(aws --endpoint-url=http://localhost:4566 kinesis get-records --shard-iterator $SHARD_ITERATOR)
+
+# Getting the predictions and decode them
+echo $RESULT | jq -r '.Records[0].Data' | base64 --decode
+ ```

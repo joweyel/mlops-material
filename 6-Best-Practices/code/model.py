@@ -1,18 +1,19 @@
 import os
 import json
-import boto3
 import base64
 
+import boto3
 import mlflow
 
 
 def get_model_location(run_id):
+    # pylint: disable=missing-function-docstring
     model_location = os.getenv('MODEL_LOCATION')
 
     if model_location is not None:
         return model_location
 
-    model_bucket = os.getenv('MODEL_BUCKET', 'mlflow-artifacts-remote-jw')
+    model_bucket = os.getenv('MODEL_BUCKET', 'mlflow-models-alexey')
     experiment_id = os.getenv('MLFLOW_EXPERIMENT_ID', '1')
 
     model_location = f's3://{model_bucket}/{experiment_id}/{run_id}/artifacts/model'
@@ -76,47 +77,44 @@ class ModelService:
 
         return {'predictions': predictions_events}
 
-# Self-contained kinesis call that does not interfere with other tests but does the work
-class KinesisCallback():
-    def __init__(self, kinesis_client, prediction_stream_name) -> None:
+
+class KinesisCallback:
+    # pylint: disable=missing-class-docstring, too-few-public-methods
+    def __init__(self, kinesis_client, prediction_stream_name):
         self.kinesis_client = kinesis_client
         self.prediction_stream_name = prediction_stream_name
-    
+
     def put_record(self, prediction_event):
-        ride_id = prediction_event["prediction"]["ride_id"]
+        ride_id = prediction_event['prediction']['ride_id']
 
         self.kinesis_client.put_record(
             StreamName=self.prediction_stream_name,
             Data=json.dumps(prediction_event),
-            PartitionKey=str(ride_id)
+            PartitionKey=str(ride_id),
         )
 
 
 def create_kinesis_client():
-    endpoint_url = os.getenv("KINESIS_ENDPOINT_URL")
+    endpoint_url = os.getenv('KINESIS_ENDPOINT_URL')
+
     if endpoint_url is None:
-        return boto3.client("kinesis")
-    return boto3.client("kinesis", endpoint_url=endpoint_url)
+        print("Kinesis client: connecting to AWS")
+        return boto3.client('kinesis')
+
+    print("Kinesis client: connecting to localstack")
+    return boto3.client('kinesis', endpoint_url=endpoint_url)
 
 
-
-
-def init(predict_stream_name: str, run_id: str, test_run: bool):
+def init(prediction_stream_name: str, run_id: str, test_run: bool):
     model = load_model(run_id)
 
     callbacks = []
+
     if not test_run:
-        kinesis_client = boto3.client("kinesis")
-        kinesis_callback = KinesisCallback(
-            kinesis_client, 
-            predict_stream_name
-        )
+        kinesis_client = create_kinesis_client()
+        kinesis_callback = KinesisCallback(kinesis_client, prediction_stream_name)
         callbacks.append(kinesis_callback.put_record)
 
+    model_service = ModelService(model=model, model_version=run_id, callbacks=callbacks)
 
-    model_service = ModelService(
-        model=model, 
-        model_version=run_id, 
-        callbacks=callbacks
-    )
     return model_service

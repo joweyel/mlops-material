@@ -141,8 +141,134 @@ aws --endpoint-url=http://localhost:4566 kinesis list-streams
 }
 ```
 
+
+To obtain predictions from the stream the following commands can be used:
+
+```bash
+export SHARD='shardId-000000000000'
+export PREDICTIONS_STREAM_NAME='ride_predictions'
+
+# Get shard iterator
+SHARD_ITERATOR=$(aws --endpoint-url=http://localhost:4566 \
+    kinesis get-shard-iterator \
+    --shard-id ${SHARD} \
+    --shard-iterator-type TRIM_HORIZON \
+    --stream-name ${PREDICTIONS_STREAM_NAME} \
+    --query 'ShardIterator' \
+)
+
+# Extracting records from shard
+RESULT=$(aws --endpoint-url=http://localhost:4566 kinesis get-records --shard-iterator $SHARD_ITERATOR)
+
+# Getting the predictions and decode them
+echo $RESULT | jq -r '.Records[0].Data' | base64 --decode
+```
+
+The result of a test run returned the following output:
+```json
+{
+    "model": "ride_duration_prediction_model", 
+    "version": "Test123", 
+    "prediction": {
+      "ride_duration": 21.432393319299262, 
+      "ride_id": 256
+    }
+}
+```
+
+To make everything more compact and testable instead of running every command in the commmand line, everything will be packaged in the python script [test_kinesis.py](code/integration-test/test_kinesis.py). The test is also included in [run.sh](code/integration-test/run.sh):
+
+```bash
+...
+pipenv run python3 test_kinesis.py 
+
+ERROR_CODE=$?
+
+if [ ${ERROR_CODE} != 0 ]; then
+    docker-compose logs
+    docker-compose down
+    exit ${ERROR_CODE}
+fi
+
+docker-compose down
+```
+
+For re-execution of `run.sh`, docker-compose has to be stopped first.
+```bash
+docker-compose down
+./run.sh
+```
+
+### Conclusion
+To run the created tests you can now use the following commands (in `code`-directory):
+```bash
+# Unit tests
+pipenv run pytest tests/
+# Integration tests
+./integration-test/run.sh
+```
+
+
 <a id="4-linting"></a>
 ## 6.4 Code quality: linting and formatting
+
+<u>The two important concepts of this section:</u>
+- **Linting:** Process of analyzing source code to identify potential errors, improve code quality, and enforce coding standards
+- **Formatting:** Deals with the visual arrangement of code, including aspects like indentation, line breaks, and spacing
+
+### Installing `Pylint` to lint Python code
+```bash
+pipenv install --dev pylint
+
+
+pipenv shell      # Activate environment
+pylint model.py   # Example for linting
+
+# Linting all the code recursively starting from "."
+pylint --recursive=y .
+```
+
+It is also possible to select and configure a linter in VSCode by installing the VSCode extension of the linter `Pylint`. 
+
+### Excluding certain warnings from the linter (3 different ways)
+- **Version 1 (VSCode config):**
+  - To exclude certain warnings, go to the settings by typing `[Ctrl]+[,]` and search for pylint. In the **`args`**-part of the pylint settings you can disable warnings by typing `--disable=<Warning-ID>`. 
+- **Version 2 (.pylintrc)**:
+  - create the file [`.pylintrc`](code/.pylintrc)  in the `code` directory and add the following code to disable certain warnings
+    ```ini
+    [MESSAGE CONTROL]
+ 
+    disable=missing-function-docstring,
+            missing-final-newline,
+            missing-class-docstring
+    ```
+- **Version 3 (pyproject.toml)**:
+  - Allows to configure python projects, including linting:
+    ```ini
+    [tool.pylint.message_control]
+    disable = [ # warnings to exclude
+        "missing-function-docstring",
+        "missing-final-newline",
+        "missing-class-docstring",
+        "missing-module-docstring"
+    ]
+    ```
+
+To explicitly exclude pylint warnings in specific functions / methods / classes locally, you can just add the following to the code of the component:
+```python
+# Example of locally disabling warnings
+def get_model_location(run_id):
+    # pylint: disable=missing-function-docstring
+    ...
+    return model_location
+```
+
+### Code formatting with `black` and `isort`
+
+- **`black`**: A code formatter for python code
+- **`isort`**: Library for sorting python imports according to some guideline + compatibility with `black`
+
+
 
 <a id="5-git"></a>
 ## 6.5 Git pre-commit hooks

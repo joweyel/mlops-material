@@ -408,7 +408,18 @@ git commit -m "initial commit"
 ```
 
 <a id="6-make"></a>
-## 6.6 Makefiles and make
+## 6.6 Makefiles and `make`
+
+The usage of the tool `make` can help automating 
+
+### Creating a Makefile
+```bash
+touch Makefile  # thats it
+```
+
+The content with its different rules can be found in the the [`Makefile`](code/Makefile) 
+
+### Putting code in the Makefile
 
 <a id="7-homework"></a>
 ## 6.7 Homework

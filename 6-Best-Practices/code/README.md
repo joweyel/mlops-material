@@ -65,3 +65,22 @@ RESULT=$(aws --endpoint-url=http://localhost:4566 kinesis get-records --shard-it
 # Getting the predictions and decode them
 echo $RESULT | jq -r '.Records[0].Data' | base64 --decode
 ```
+### Makefiles
+
+Without Makefile:
+```bash
+isort .
+black .
+pylint --recursive=y .
+pytest tests/
+```
+
+To prepare the project run:
+```bash
+make setup
+```
+
+To run the quality check with the commands as seen above, run:
+```bash
+make quality_checks
+```

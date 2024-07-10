@@ -18,7 +18,7 @@ aws --endpoint-url=http://localhost:4566 \
     --stream-name ${PREDICTIONS_STREAM_NAME} \
     --shard-count 1
 
-pipenv run python3 test_docker.py 
+pipenv run python3 test_docker.py
 
 ERROR_CODE=$?
 
@@ -28,7 +28,7 @@ if [ ${ERROR_CODE} != 0 ]; then
     exit ${ERROR_CODE}
 fi
 
-pipenv run python3 test_kinesis.py 
+pipenv run python3 test_kinesis.py
 
 ERROR_CODE=$?
 

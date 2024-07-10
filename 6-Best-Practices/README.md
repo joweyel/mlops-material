@@ -297,8 +297,115 @@ Linting, formatting and sorting of imports can all be done automatically, given 
 - **Sorting - `isort`**: Sorts imports in the code according to a given set of rules
   
 
+When putting everything together (after configuring each component), you get commands like this:
+```bash
+isort .
+black .
+pylint --recursive=y .
+pytest tests
+```
+
 <a id="5-git"></a>
 ## 6.5 Git pre-commit hooks
+When committing code to Git it should habe ideally been processed with the 4 commands above. However manually calling them every time it is possible to automate `isort`, `black` and `pylint`. For this <u>Git uses pre-commit hooks</u>. 
+
+The processing via pre-commit hooks can be done the python package `pre-commit`:
+```bash
+pipenv install --dev pre-commit
+```
+
+To use it in a specific (sub-)folder of the Git-Repo you are currently working in you can initialize an "empty" repo in this folder with `git init`. Normally hooks are handled in the repos configuration, however the need to only apply the hooks only to one folder makes this not viable. This local repository is however only temporary and `.git` is removed after this section is done. 
+
+```bash
+cd code
+git init
+```
+
+Running `pre-commit` for first time and getting a sample pre-commit config:
+```bash
+pre-commit sample-config  # writes to stdout
+pre-commit sample-config > .pre-commit-config.yaml  # write to file
+```
+
+Next step is to create a pre-commit hook in the git-folder `.git/hooks/`:
+```bash
+pre-commit install
+# Looking into the file 
+less .git/hooks/pre-commit
+```
+
+The step of installing pre-commit is required on every computer that wants to use them since the `.git` folder is local only and is updated with newer commits from the repo.
+
+**Create `.gitignore`, `add` and `commit files`**
+
+1. Create gitignore file that excludes `__pycache__`
+2. Run `git add .` to add all files from the current folder
+3. Run `git commit -m "initial commit"` to trigger the pre-commit hooks
+4. Look at `git diff` to see the differences
+5. Run `git add .` to add the changed files to be committed
+6. Run `git commit -m "fixes from pre-commit default hooks"` to commit the changed files
+
+**Adding `isort` and `black`, `pylint` and `pytest` to the hooks**
+
+```yaml
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+ - repo: https://github.com/pre-commit/pre-commit-hooks
+   rev: v4.6.0
+   hooks:
+    - id: trailing-whitespace
+    - id: end-of-file-fixer
+    - id: check-yaml
+    - id: check-added-large-files
+ - repo: https://github.com/pycqa/isort
+   rev: 5.13.2
+   hooks:
+    - id: isort
+      name: isort (python)
+ - repo: https://github.com/psf/black
+   rev: 24.4.2
+   hooks:
+     - id: black
+       language_version: python3.9
+ - repo: local
+   hooks:
+     - id: pylint
+       name: pylint
+       entry: pylint
+       language: system
+       types: [python]
+       require_serial: true
+       args:
+         [
+           "-rn", # Only display messages
+           "-sn", # Don't display the score
+           "--recursive=y"
+         ]
+ - repo: local
+   hooks:
+    - id: pytest-check
+      name: pytest-check
+      entry: pytest
+      language: system
+      pass_filenames: false
+      always_run: true
+      args: [
+        "tests/"
+      ]
+```
+
+If you are getting errors with [`pyproject.toml`](code/pyroject.toml) there is a possibility that you specified the wrong versions of the used libraries in the hooks. To remedy this you can automatically update / change to the library version you have with `pre-commit autoupdate`.
+
+When a file files pytest then it will not be moved to the commit stage but still remains in the `untracked` / `modified` state.
+
+Now you can delete the `.git` folder to redo it again an test if the commit goes through:
+```bash
+rm -rf .git
+pre-commit intall
+git add .
+git commit -m "initial commit"
+```
 
 <a id="6-make"></a>
 ## 6.6 Makefiles and make

@@ -64,4 +64,4 @@ RESULT=$(aws --endpoint-url=http://localhost:4566 kinesis get-records --shard-it
 
 # Getting the predictions and decode them
 echo $RESULT | jq -r '.Records[0].Data' | base64 --decode
- ```
+```

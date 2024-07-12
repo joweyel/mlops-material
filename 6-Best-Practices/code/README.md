@@ -84,3 +84,5 @@ To run the quality check with the commands as seen above, run:
 ```bash
 make quality_checks
 ```
+
+For all possible options for executing of the [Makefile](Makefile) please refere to the file itsel.

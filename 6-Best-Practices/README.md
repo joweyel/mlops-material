@@ -1,4 +1,4 @@
-# 6. Best Practices
+# 6. Best Practices (Part A)
 
 - 6.1 [Testing Python code with pytest](#1-pytest)
 - 6.2 [Integration tests with docker-compose](#2-integration-test)
@@ -416,10 +416,407 @@ The usage of the tool `make` can help automating
 ```bash
 touch Makefile  # thats it
 ```
+- Running the makefile is done by first writing `make` and then followed by the name of the part you want to execute. In the example below an example would be `make build` or `make quality_control`.
 
-The content with its different rules can be found in the the [`Makefile`](code/Makefile) 
+The content with its different rules can be found in the the [`Makefile`](code/Makefile)
+```bash
+# Parameter for the makefile (relevant for docker)
+LOCAL_TAG=$(shell date +"%Y-%m-%d-%H-%M")
+LOCAL_IMAGE_NAME:="stream-model-duration:${LOCAL_TAG}"
 
-### Putting code in the Makefile
+# `make test` - runs tests
+test:
+	pytest tests/
+
+
+# `make quality_checks` - runs quality check programs
+quality_checks:
+	isort .
+	black .
+	pylint --recursive=y .
+
+# `make build`
+build: quality_checks test
+	docker build -t ${LOCAL_IMAGE_NAME} .
+
+# `make integration_test`
+integration_test: build
+	LOCAL_IMAGE_NAME=${LOCAL_IMAGE_NAME} bash integration-test/run.sh
+
+# `make publish`
+publish: build integration_test
+	LOCAL_IMAGE_NAME=${LOCAL_IMAGE_NAME} bash scripts/publish.sh
+
+# `make setup` - installs libraries required for tests and quality checks
+setup:
+	pipen install --dev 
+	pre-commit install
+```
+
 
 <a id="7-homework"></a>
 ## 6.7 Homework
+
+
+# 6. Best Practices using Infrastructure-as-Code (IaC) with Terraform (Part B)
+
+- 6B.TF [Terraform Summary](#tf-summary)
+- 6B.1 [Terraform - Introduction](#1b-tf-intro)
+- 6B.2 [Terraform - Modules and Outputs variables](#2b-modules-vars)
+- 6B.3 [Terraform - Build an e2e workflow for Ride Predictions](#3b-workflow)
+- 6B.4 [Terraform - Test the pipeline e2e](#4b-test)
+- 6b.CI/CD [CI/CD Summary](#cicd-summary)
+- 6B.5 [CI/CD - Introduction](#5b-cicd-intro)
+- 6B.6 [CI/CD - Continuous Integration](#6b-ci)
+- 6B.7 [CI/CD - Continuous Delivery](#7b-cd)
+- [Alternative CI/CD Solutions](#alternatives)
+
+## Project infrastructure moodules:
+- <u>**Amazon Web Services (AWS)**</u>
+  - `Kinesis`: Streams (Producer and Consumer)
+  - `Lambda`: Serving API
+  - `S3 Bucket`: Model artifacts
+  - `ECR`: Image Registry
+
+![project_structure](imgs/AWS-stream-pipeline.png)
+
+<a id="tf-summary"></a>
+## Terraform Summary
+
+- Setting up a stream-based pipeline infrastructure in AWS, using Terraform
+- Project infrastructure modules (AWS): Kinesis Streams (Producer & Consumer), Lambda (Serving API), S3 Bucket (Model artifacts), ECR (Image Registry)
+
+<a id="1b-tf-intro"></a>
+## 6B.1 Terraform - Introduction
+
+### Setup
+
+**Installation**:
+
+* [aws-cli](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) (both versions are fine)
+* [terraform client](https://www.terraform.io/downloads)
+
+**Configuration**:
+
+1. If you've already created an AWS account, head to the IAM section, generate your secret-key, and download it locally. 
+[Instructions](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-prereqs.html)
+
+2. [Configure]((https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html)) `aws-cli` with your downloaded AWS secret keys:
+      ```shell
+         $ aws configure
+         AWS Access Key ID [None]: xxx
+         AWS Secret Access Key [None]: xxx
+         Default region name [None]: eu-west-1
+         Default output format [None]:
+      ```
+
+3. Verify aws config:
+      ```shell
+        $ aws sts get-caller-identity
+      ```
+
+4. (Optional) Configuring with `aws profile`: [here](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sourcing-external.html) and [here](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#using-an-external-credentials-process) 
+
+
+<a id="2b-modules-vars"></a>
+## 6B.2 Terraform - Modules and Outputs variables
+
+### Modules
+A *module* in Terraform is a container for multiple resources that are used together. Modules can be used to create lightweight abstractions, so that you can describe your infrastructure in terms of its architecture, rather than directly in terms of physical objects.
+
+### Creating Terraform files and starting the project
+```bash
+touch main.tf variables.tf
+```
+
+The following code has to be inserted to the [main.tf](code/infrastructure/main.tf):
+```python
+terraform {
+  required_version = ">= 1.0"
+  backend "s3" {  # where TF-States are stored (to keep track)
+    bucket = "tf-state-mlops-zoomcamp-jw"
+    key = "mlops-zoomcamp.tfstate"
+    region = "us-east-1"
+    encrypt = true
+  }
+}
+```
+- Now you have to create the bucket, that you have specified in the `backend` parameter. This has to be done manually to let Terraform store the tfstate files there, where all the changes are tracked and saved.
+
+### Creating a kinesis Terraform module (+creating some other folders for later)
+```bash
+mkdir modules
+cd modules
+mkdir ecr kinesis lambda s3
+cd kinesis
+# Create files
+touch main.tf variables.tf
+# Fill with required content
+```
+The content of the created files can be found here: [main.tf](code/infrastructure/modules/kinesis/main.tf), [variables.tf](code/infrastructure/modules/kinesis/variables.tf)
+- `main.tf`
+  ```python
+  # Create Kinesis Data Stream
+
+  resource "aws_kinesis_stream" "stream" {
+      name                = var.stream_name
+      shard_count         = var.shard_count
+      retention_period    = var.retention_period
+      shard_level_metrics = var.shard_level_metrics
+      tags = {
+          CreatedBy = var.tags
+      }
+  }
+
+  # to get the arn output of the kinesis stream
+  output "stream_arn" {
+      value = aws_kinesis_stream.stream.arn
+  }
+  ```
+
+To add new stuff to the overall project the previous version of the architecture will be deleted. For this the following command can be used:
+```bash
+terraform delete
+```
+You also have to provide the name of the kinesis-stream, just like during `terraform plan`.
+
+
+<a id="3b-workflow"></a>
+## 6B.3 Terraform - Build an e2e workflow for Ride Predictions
+
+In this section the rest of the pipeline (seen in the image above) will be defined with Terraform. Previously only one kinesis-stream was created with Terraform.
+
+### Creating two Kinesis streams (in `infrastructure/main.tf`)
+
+```python
+# ride_events
+module "source_kinesis_stream" {
+  source           = "./modules/kinesis" # module to load
+  retention_period = 48                  # 2 days retention period
+  shard_count      = 2                   # number of shards to process data
+  stream_name      = "${var.source_stream_name}_${var.project_id}"
+  tags             = var.project_id
+}
+
+# ride_predictions
+module "output_kinesis_stream" {
+  source           = "./modules/kinesis" # module to load
+  retention_period = 48                  # 2 days retention period
+  shard_count      = 2                   # number of shards to process data
+  stream_name      = "${var.output_stream_name}_${var.project_id}"
+  tags             = var.project_id
+}
+```
+
+### Creating S3 module
+
+In `modules/s3` the following files are created: [main.tf](code/infrastructure/modules/s3/main.tf), [variables.tf](code/infrastructure/modules/s3/variables.tf)
+
+```python
+resource "aws_s3_bucket" "s3_bucket" {
+    bucket = var.bucket_name
+    # acl = "private"
+}
+
+output "name" {
+    value = aws_s3_bucket.s3_bucket.bucket
+}
+```
+
+When running `terraform plan` and `terraform apply`, the following parameter have to be provided:
+
+- **var.model_bucket**: `stg-mlflow-models-jw` (must be unique)
+- **var.output_stream_name**: `stg_ride_predictions`
+- **var.source_stream_name**: `stg_ride_events`
+
+With this 2 kinesis streams and 1 bucket are configured and ready to be applied to the cloud. For this run:
+```bash
+terraform apply
+```
+
+### Creating ECR module
+In this part a docker registry to store images is created. These images are then for the lambda service to use in predicting. Usually, the services that are listed in the root `main.tf` are created in parallel. However lambda and ecr have dependencies to the two kinesis streams and the s3 bucken and can therefore not be created in parallel. Otherwise the resources will not be found.
+
+The code can be found in the files [main.tf](code/infrastructure/modules/ecr/main.tf) and [variables.tf](code/infrastructure/modules/ecr/variables.tf)
+
+Content of `modules/ecr/main.tf`:
+```python
+resource "aws_ecr_repository" "repo" {
+  name                 = var.ecr_repo_name
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = false
+  }
+}
+
+## Very important
+# In practice, the Image build-and-push step is handled separately by the CI/CD pipeline and not the IaC script.
+# But because the lambda config would fail without an existing Image URI in ECR,
+# we can also upload any base image to bootstrap the lambda config, unrelated to your Inference logic
+resource "null_resource" "ecr_image" {
+  triggers = { # md5 hashes to `lamnda_function.py` and `Dockerfile` (rebuild if changes in hash are found)
+    python_file = "md5(file(var.lambda_function_local_path))"
+    docker_file = "md5(file(var.docker_image_local_path))"
+  }
+  # login to ecr, build image, then push it to the registry
+  provisioner "local-exec" {
+    command = <<EOF
+             aws ecr get-login-password --region ${var.region} | docker login --username AWS --password-stdin ${var.account_id}.dkr.ecr.${var.region}.amazonaws.com
+             cd ../
+             docker build -t ${aws_ecr_repository.repo.repository_url}:${var.ecr_image_tag} .
+             docker push ${aws_ecr_repository.repo.repository_url}:${var.ecr_image_tag}
+         EOF
+  }
+}
+
+# Wait for the image to be uploaded, before lambda config runs
+data "aws_ecr_image" "lambda_image" {
+  depends_on = [
+    null_resource.ecr_image
+  ]
+  repository_name = var.ecr_repo_name
+  image_tag       = var.ecr_image_tag
+}
+
+output "image_uri" {
+  value = "${aws_ecr_repository.repo.repository_url}:${data.aws_ecr_image.lambda_image.image_tag}"
+}
+```
+
+Addition in `main.tf`:
+```python
+module "ecr_image" {
+  source                     = "./modules/ecr"
+  ecr_repo_name              = "${var.ecr_repo_name}_${var.project_id}"
+  account_id                 = local.account_id
+  lambda_function_local_path = var.lambda_function_local_path
+  docker_image_local_path    = var.docker_image_local_path
+}
+```
+
+The ECR component also requires the input of many variables at run-time. This was managable when there was only Kinesis and S3, now there are quite a few more variables required. To remedy this, you can create a file to save variables to, that is read when running terraform apply / plan. These files are so-called `tfvars`-files that can contain e.g. variables for staging, production etc.
+
+For variable file for staging can be found in [vars/stg.tfvars](code/infrastructure/vars/stg.tfvars):
+```python
+source_stream_name         = "stg_ride_events"
+output_stream_name         = "stg_ride_predictions"
+model_bucket               = "stg-mlflow-models-jw"
+lambda_function_local_path = "../lambda_function.py"
+docker_image_local_path    = "../Dockerfile"
+ecr_repo_name              = "stg_stream_model_duration"
+```
+
+You have to use this command to call terraform apply / plan withe the variables above:
+```bash
+# Should show 2 new resouces to create (if kinesis and s3 resources were not deleted)
+terraform plan -var-file=vars/stg.tfvars
+
+# May take some time (especially for pushing the docker image to ECR)
+terraform apply -var-file=vars/stg.tfvars
+```
+
+### Creating Lambda Function module
+**Important**: It is required that the user that is used for terraform has the ability to create and work with IAM policies.
+
+Files of this part of the project:
+
+- [modules/lambda/main.tf](code/infrastructure/modules/lambda/main.tf)
+- [modules/lambda/variables.tf](code/infrastructure/modules/lambda/variables.tf)
+- [modules/lambda/iam.tf](code/infrastructure/modules/lambda/iam.tf) (Needed to let lambda interact with both kinesis streams)
+
+Similar to the ECR module, there is a dependecy to the kinesis input stream. This means that the input stream has to be existing to be referenced. 
+
+
+After everything is defined, lets re-initialize the project and apply the changes:
+```bash
+terraform init 
+terraform plan -var-file=vars/stg.tfvars
+terraform apply -var-file=vars/stg.tfvars
+```
+
+
+<a id="4b-test"></a>
+## 6B.4 Terraform - Test the pipeline e2e
+
+Now that the End-2-End Pipelin is up and running it is time to test the pipeline with some input. For this we send data to the ride-events kinesis stream. 
+
+### Configuring environment variables for Lambda
+
+Before we can run anything we still have to configure the Environment variables of `kinesis_lambda` in [main.tf](code/infrastructure/modules/lambda/main.tf). These 3 variables are:
+- **Otuput Kinesis-Stream**: `PREDICTIONS_STREAM_NAME` (where results are sent to)
+- **Model bucket**:  `MODEL_BUCKET` (models are saved here)
+- **Run ID**: `RUN_ID` (for choosing the model)
+
+For configuring all 3 variablesm the script [deploy_manual.sh](code/scripts/deploy_manual.sh) is used:
+```bash
+#!/usr/bin/env bash
+
+export MODEL_BUCKET_PROD="stg-mlflow-models-jw-mlops-zoomcamp"
+export PREDICTIONS_STREAM_NAME="stg_ride_predictions-mlops-zoomcamp"
+export LAMBDA_FUNCTION="stg_ride_prediction_lambda_mlops-zoomcamp"
+
+# Model artifacts bucket from the prev. weeks (MLflow experiments)
+export MODEL_BUCKET_DEV="mlflow-artifacts-remote-jw"
+
+# Get latest RUN_ID from latest S3 partition.
+# NOT FOR PRODUCTION!
+# In practice, this is generally picked up from your experiment tracking tool such as MLflow or DVC
+export RUN_ID=$(aws s3api list-objects-v2 --bucket ${MODEL_BUCKET_DEV} \
+--query 'sort_by(Contents, &LastModified)[-1].Key' --output=text | cut -f2 -d/)
+
+# NOT FOR PRODUCTION!
+# Just mocking the artifacts from training process in the Prod env
+aws s3 sync s3://${MODEL_BUCKET_DEV} s3://${MODEL_BUCKET_PROD}
+
+# Set new var RUN_ID in existing set of vars.
+variables="{PREDICTIONS_STREAM_NAME=${PREDICTIONS_STREAM_NAME}, MODEL_BUCKET=${MODEL_BUCKET_PROD}, RUN_ID=${RUN_ID}}"
+
+# https://docs.aws.amazon.com/lambda/latest/dg/configuration-envvars.html
+aws lambda update-function-configuration --function-name ${LAMBDA_FUNCTION} --environment "Variables=${variables}"
+```
+
+After coyping all relevant artifacts to the `MODEL_BUCKET_PROD` bucket you can start to send events to the input kinesis stream:
+```bash
+# Specify the stream to send events to
+export KINESIS_STREAM_INPUT="stg_ride_predictions-mlops-zoomcamp"
+
+# The sending
+SHARD_ID=$(aws kinesis put-record  \
+        --stream-name ${KINESIS_STREAM_INPUT}   \
+        --partition-key 1  --cli-binary-format raw-in-base64-out  \
+        --data '{"ride": {
+            "PULocationID": 130,
+            "DOLocationID": 205,
+            "trip_distance": 3.66
+        },
+        "ride_id": 156}'  \
+        --query 'ShardId' \
+        --output text
+  )
+```
+
+
+
+<a id="cicd-summary"></a>
+## CI/CD Summary
+
+- Automate a complete CI/CD pipeline using GitHub Actions to automatically trigger jobs to build, test, and deploy our service to Lambda for every new commit/code change to our repository.
+-  The goal of our CI/CD pipeline is to execute tests, build and push container image to a registry, and update our lambda service for every commit to the GitHub repository.
+
+
+<a id="5b-cicd-intro"></a>
+## 6B.5 CI/CD - Introduction
+
+
+<a id="6b-ci"></a>
+## 6B.6 CI/CD - Continuous Integration
+
+
+<a id="7b-cd"></a>
+## 6B.7 CI/CD - Continuous Delivery
+
+
+<a id="alternatives"></a>
+## Alternative CI/CD Solutions
+

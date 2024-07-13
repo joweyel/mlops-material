@@ -796,8 +796,6 @@ SHARD_ID=$(aws kinesis put-record  \
   )
 ```
 
-
-
 <a id="cicd-summary"></a>
 ## CI/CD Summary
 
@@ -808,11 +806,91 @@ SHARD_ID=$(aws kinesis put-record  \
 <a id="5b-cicd-intro"></a>
 ## 6B.5 CI/CD - Introduction
 
+- **CI/CD**: imporatant DevOps practice that speeds up software delivery
+- **Continuous Integration (CI)**: Tests and packages code in a structured fashion
+- **Continuous Delivery (CD)**: Integrates the packaged code to a variety of applications that depend on it
+
+![cicd_pipeline](imgs/ci_cd_zoomcamp.png)
+
+The pipeline in the graphic above is triggered every time when a commit is done. The CI-part tests the code and makes it ready for deployment. The CD-part then deploys the code to the applcations that depend on it.
 
 <a id="6b-ci"></a>
 ## 6B.6 CI/CD - Continuous Integration
 
+The first step here is to create files and folders that describe the process that has to be triggered on vertain events like commits or pull requests.
 
+- Create `.github/workflows` in the root directory of the repo
+- Create [`ci-test.yml`](../.github/workflows/ci-test.yml) and [`cd-deploy.yml`](../.github/workflows/cd-deploy.yml)
+
+Some parameters in the yml-files are set at multiple points of the code. This is because different jobs is an independent container in a Github workflow.
+
+```yml
+name: CI-Tests
+on:
+  pull_request:
+    branches:
+      - 'develop'
+    paths:
+      - '6-Best-Practices/code/**'
+
+env:
+  AWS_DEFAULT_REGION: 'eu-west-1'
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install dependencies
+        working-directory: "06-best-practices/code"
+        run: pip install pipenv && pipenv install --dev
+
+      - name: Run Unit tests
+        working-directory: "06-best-practices/code"
+        run: pipenv run pytest tests/
+
+      - name: Lint
+        working-directory: "06-best-practices/code"
+        run: pipenv run pylint --recursive=y .
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      - name: Integration Test
+        working-directory: '6-Best-Practices/code/integraton-test'
+        run: |
+          . run.sh
+
+  tf-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+      - uses: hashicorp/setup-terraform@v2
+
+      - name: TF plan
+        id: plan
+        working-directory: '6-Best-Practices/code/infrastructure'
+        run: |
+          terraform init -backend-config="key=mlops-zoomcamp-prod.tfstate" --reconfigure && terraform plan --var-file vars/prod.tfvars
+```
 <a id="7b-cd"></a>
 ## 6B.7 CI/CD - Continuous Delivery
 

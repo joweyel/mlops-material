@@ -4,7 +4,7 @@ AWS_REGION="us-east-1"
 
 export MODEL_BUCKET_PROD="stg-mlflow-models-jw-mlops-zoomcamp"
 export PREDICTIONS_STREAM_NAME="stg_ride_predictions-mlops-zoomcamp"
-export LAMBDA_FUNCTION="stg_ride_prediction_lambda_mlops-zoomcamp"
+export LAMBDA_FUNCTION="stg_prediction_lambda_mlops-zoomcamp"  #"stg_ride_prediction_lambda_mlops-zoomcamp"
 
 # Model artifacts bucket from the prev. weeks (MLflow experiments)
 export MODEL_BUCKET_DEV="mlflow-artifacts-remote-jw"

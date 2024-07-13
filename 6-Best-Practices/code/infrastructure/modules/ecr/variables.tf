@@ -8,7 +8,7 @@ variable "ecr_image_tag" {
   description = "ECR repo name"
   default     = "latest"
 }
-
+ 
 variable "lambda_function_local_path" {
   type        = string
   description = "Local path to lambda function / python file"

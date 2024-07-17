@@ -817,12 +817,20 @@ The pipeline in the graphic above is triggered every time when a commit is done.
 <a id="6b-ci"></a>
 ## 6B.6 CI/CD - Continuous Integration
 
-The first step here is to create files and folders that describe the process that has to be triggered on vertain events like commits or pull requests.
+The first step here is to create files and folders that describe the process that has to be triggered on vertain events like commits. Thes code described in the yml files is then used when such an event occurs.
+
+- **Main components:**
+  - Automate sections from tests: Env setup, Unit test, Integration test, Terraform plan
+  - Create a CI workflow to trigger on `pull-request` to `develop` branch
+  - Execute demo
 
 - Create `.github/workflows` in the root directory of the repo
 - Create [`ci-test.yml`](../.github/workflows/ci-test.yml) and [`cd-deploy.yml`](../.github/workflows/cd-deploy.yml)
 
 Some parameters in the yml-files are set at multiple points of the code. This is because different jobs is an independent container in a Github workflow.
+
+<details>
+  <summary><b>ci-test.yml</b></summary>
 
 ```yml
 name: CI-Tests
@@ -891,10 +899,131 @@ jobs:
         run: |
           terraform init -backend-config="key=mlops-zoomcamp-prod.tfstate" --reconfigure && terraform plan --var-file vars/prod.tfvars
 ```
+</details>
+
 <a id="7b-cd"></a>
 ## 6B.7 CI/CD - Continuous Delivery
+
+This part of the github workflow is triggered by `push` command and deploys the code according to the yml config for CD.
+
+- **Main components:**
+  - Automate sections from tests: Terraform plan, Terraform apply, Docker build & ECR push, Update Lambda config
+  - Create a CD workflow to trigger on `push` to `develop` branch
+  - Execute demo
+
+<details>
+  <summary><b>cd-deploy.yml</b></summary>
+
+```yml
+name: CD-Deploy
+on:
+  push:
+    branches:
+      - 'develop'
+#    paths:
+#      - '6-Best-Practices/code/**'
+
+jobs:
+  build-push-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: "eu-west-1"
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+
+      # Define the infrastructure
+      - name: TF plan
+        id: tf-plan
+        working-directory: '6-Best-Practices/code/infrastructure'
+        run: |
+          terraform init -backend-config="key=mlops-zoomcamp-prod.tfstate" -reconfigure && terraform plan -var-file=vars/prod.tfvars
+
+      - name: TF Apply
+        id: tf-apply
+        working-directory: '6-Best-Practices/code/infrastructure'
+        if: ${{ steps.tf-plan.outcome }} == 'success'
+        run: |
+          terraform apply -auto-approve -var-file=vars/prod.tfvars
+          echo "::set-output name=ecr_repo::$(terraform output ecr_repo | xargs)"
+          echo "::set-output name=predictions_stream_name::$(terraform output predictions_stream_name | xargs)"
+          echo "::set-output name=model_bucket::$(terraform output model_bucket | xargs)"
+          echo "::set-output name=lambda_function::$(terraform output lambda_function | xargs)"
+
+      # Build-Push
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image-step
+        working-directory: "6-Best-Practices/code"
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ steps.tf-apply.outputs.ecr_repo }}
+          IMAGE_TAG: "latest"   # ${{ github.sha }}
+        run: |
+          docker build -t ${ECR_REGISTRY}/${ECR_REPOSITORY}:${IMAGE_TAG} .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image_uri::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      # Deploy
+      - name: Get model artifacts
+      # The steps here are not suited for production.
+      # In practice, retrieving the latest model version or RUN_ID from a service like MLflow or DVC can also be integrated into a CI/CD pipeline.
+      # But due to the limited scope of this workshop, we would be keeping things simple.
+      # In practice, you would also have a separate training pipeline to write new model artifacts to your Model Bucket in Prod.
+
+        id: get-model-artifacts
+        working-directory: "6-Best-Practices/code"
+        env:
+          MODEL_BUCKET_DEV: "mlflow-models-alexey"
+          MODEL_BUCKET_PROD: ${{ steps.tf-apply.outputs.model_bucket }}
+        run: |
+          export RUN_ID=$(aws s3api list-objects-v2 --bucket ${MODEL_BUCKET_DEV} \
+          --query 'sort_by(Contents, &LastModified)[-1].Key' --output=text | cut -f2 -d/)
+          aws s3 sync s3://${MODEL_BUCKET_DEV} s3://${MODEL_BUCKET_PROD}
+          echo "::set-output name=run_id::${RUN_ID}"
+
+      - name: Update Lambda
+        env:
+          LAMBDA_FUNCTION: ${{ steps.tf-apply.outputs.lambda_function }}
+          PREDICTIONS_STREAM_NAME: ${{ steps.tf-apply.outputs.predictions_stream_name }}
+          MODEL_BUCKET: ${{ steps.tf-apply.outputs.model_bucket }}
+          RUN_ID: ${{ steps.get-model-artifacts.outputs.run_id }}
+        run: |
+          variables="{ \
+                    PREDICTIONS_STREAM_NAME=$PREDICTIONS_STREAM_NAME, MODEL_BUCKET=$MODEL_BUCKET, RUN_ID=$RUN_ID \
+                    }"
+
+          STATE=$(aws lambda get-function --function-name $LAMBDA_FUNCTION --region "eu-west-1" --query 'Configuration.LastUpdateStatus' --output text)
+              while [[ "$STATE" == "InProgress" ]]
+              do
+                  echo "sleep 5sec ...."
+                  sleep 5s
+                  STATE=$(aws lambda get-function --function-name $LAMBDA_FUNCTION --region "eu-west-1" --query 'Configuration.LastUpdateStatus' --output text)
+                  echo $STATE
+              done
+
+          aws lambda update-function-configuration --function-name $LAMBDA_FUNCTION \
+                    --environment "Variables=${variables}"
+```
+</details>
 
 
 <a id="alternatives"></a>
 ## Alternative CI/CD Solutions
 
+* Using args and env variables in docker image, and leveraging makefile commands in cicd
+    * Check the repo [README](https://github.com/Nakulbajaj101/mlops-zoomcamp/blob/main/06-best-practices/code-practice/README.md)
+    * Using the args [Dockerfile](https://github.com/Nakulbajaj101/mlops-zoomcamp/blob/main/06-best-practices/code-practice/Dockerfile)
+    * Using build args [ECR terraform](https://github.com/Nakulbajaj101/mlops-zoomcamp/blob/main/06-best-practices/code-practice/deploy/modules/ecr/main.tf)
+    * Updating lambda env variables [Post deploy](https://github.com/Nakulbajaj101/mlops-zoomcamp/blob/main/06-best-practices/code-practice/deploy/run_apply_local.sh)
+    * Making use of make file commands in CICD [CICD](https://github.com/Nakulbajaj101/mlops-zoomcamp/tree/main/.github/workflows)

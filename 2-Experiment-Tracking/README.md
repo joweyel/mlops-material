@@ -617,7 +617,7 @@ For mor information look into the 3 notebooks:
 ## Limitations (and when not to use MLflow)
 - <u>Authentication & Users</u>: FOSS-Version of MLflow does not provide any authentication
 - <u>Data Versioning</u>: MLflow does not provide a built-in solution, but has a few ways to deal with this problem. Is required for reproducibility.
-- <u>Model / Data Monitoring & Alerting</u>: Outside of MLflow Scope. There are more suitable Tools for this, like Weights and Biases [W&B-Websize](https://wandb.ai/site)
+- <u>Model / Data Monitoring & Alerting</u>: Outside of MLflow Scope. There are more suitable Tools for this, like Weights and Biases [W&B-Website](https://wandb.ai/site)
 
 ## MLflow alternatives (paid, but free for individual use)
 - Neptune

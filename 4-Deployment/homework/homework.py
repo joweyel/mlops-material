@@ -9,39 +9,39 @@ import argparse
 categorical = ["PULocationID", "DOLocationID"]
 
 def read_data(filename):
+    """"Function to load and preprocess data."""
     df = pd.read_parquet(filename)
-    
     df["duration"] = df.tpep_dropoff_datetime - df.tpep_pickup_datetime
     df["duration"] = df.duration.dt.total_seconds() / 60
 
     df = df[(df.duration >= 1) & (df.duration <= 60)].copy()
 
     df[categorical] = df[categorical].fillna(-1).astype("int").astype("str")
-    
     return df
 
 
 def load_model(model_path):
+    """Loads a model from a specified path."""
     with open(model_path, "rb") as f_in:
         dv, model = pickle.load(f_in)
     return dv, model
 
 
 def apply_model(input_file, model_path, output_file, **kwargs):
+    """Running the model to predict."""
     year = kwargs["year"]
     month = kwargs["month"]
-    
     print(f"Loading data: {input_file}")
     df = read_data(input_file)
 
     print(f"Loading model: {model_path}")
     dv, model = load_model(model_path)
 
-    print(f"Preprocessing of data")
+    print("Preprocessing of data")
     dicts = df[categorical].to_dict(orient='records')
     X_val = dv.transform(dicts)
 
-    print(f"Applying the model")
+    print("Applying the model")
     y_pred = model.predict(X_val)
     print(f"Mean prediction duration: {y_pred.mean():.2f}")
 

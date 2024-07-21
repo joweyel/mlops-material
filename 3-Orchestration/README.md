@@ -105,6 +105,7 @@ The names in the decorators are use in the Prefec UI for visualization.
 1. Get the Repo
 ```shell
 git clone https://github.com/discdiver/prefect-mlops-zoomcamp
+cd prefect-mlops-zoomcamp
 ```
 2. Create a conda environment
 ```shell
@@ -113,6 +114,8 @@ conda create -n prefect-ops python=3.9.12
 3. Install the required dependencies
 ```shell
 pip install -r requirements.txt
+# If there is a problem with pydantic, update `prefect`
+pip install -U prefect
 ```
 4. Start a `Prefect`-Server
 ```shell

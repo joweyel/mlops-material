@@ -78,7 +78,7 @@ def run_register_model(data_path: str, top_n: int):
         max_results=top_n,
         order_by=["metrics.test_rmse ASC"]
     )[0]
-
+    
     # Register the best model
     run_id = best_runs.info.run_id
     model_uri = f"runs:/{run_id}/model"

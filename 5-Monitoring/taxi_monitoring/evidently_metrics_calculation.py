@@ -30,24 +30,24 @@ create table dummy_metrics(
 )
 """
 
-reference_data = pd.read_parquet("data/reference.parquet")
-with open("models/lin_reg.bin", "rb") as f_in:
+reference_data = pd.read_parquet('data/reference.parquet')
+with open('models/lin_reg.bin', 'rb') as f_in:
 	model = joblib.load(f_in)
 
-raw_data = pd.read_parquet("data/green_tripdata_2022-02.parquet")
+raw_data = pd.read_parquet('data/green_tripdata_2022-02.parquet')
 
 begin = datetime.datetime(2022, 2, 1, 0, 0)
-num_features = ["passenger_count", "trip_distance", "fare_amount", "total_amount"]
-cat_features = ["PULocationID", "DOLocationID"]
+num_features = ['passenger_count', 'trip_distance', 'fare_amount', 'total_amount']
+cat_features = ['PULocationID', 'DOLocationID']
 column_mapping = ColumnMapping(
-    prediction="prediction",
+    prediction='prediction',
     numerical_features=num_features,
     categorical_features=cat_features,
     target=None
 )
 
 report = Report(metrics = [
-    ColumnDriftMetric(column_name="prediction"),
+    ColumnDriftMetric(column_name='prediction'),
     DatasetDriftMetric(),
     DatasetMissingValuesMetric()
 ])
@@ -67,16 +67,17 @@ def calculate_metrics_postgresql(curr, i):
 		(raw_data.lpep_pickup_datetime < (begin + datetime.timedelta(i + 1)))]
 
 	#current_data.fillna(0, inplace=True)
-	current_data["prediction"] = model.predict(current_data[num_features + cat_features].fillna(0))
+	current_data['prediction'] = model.predict(current_data[num_features + cat_features].fillna(0))
 
 	report.run(reference_data = reference_data, current_data = current_data,
 		column_mapping=column_mapping)
 
 	result = report.as_dict()
 
-	prediction_drift = result["metrics"][0]["result"]["drift_score"]
-	num_drifted_columns = result["metrics"][1]["result"]["number_of_drifted_columns"]
-	share_missing_values = result["metrics"][2]["result"]["current"]["share_of_missing_values"]
+	# creating the variables
+	prediction_drift = result['metrics'][0]['result']['drift_score']
+	num_drifted_columns = result['metrics'][1]['result']['number_of_drifted_columns']
+	share_missing_values = result['metrics'][2]['result']['current']['share_of_missing_values']
 
 	curr.execute(
 		"insert into dummy_metrics(timestamp, prediction_drift, num_drifted_columns, share_missing_values) values (%s, %s, %s, %s)",
@@ -100,5 +101,5 @@ def batch_monitoring_backfill():
 				last_send = last_send + datetime.timedelta(seconds=10)
 			logging.info("data sent")
 
-if __name__ == "__main__":
+if __name__ == '__main__':
 	batch_monitoring_backfill()

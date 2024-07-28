@@ -1,4 +1,4 @@
-# 5. Model Monitoring
+****# 5. Model Monitoring
 
 - 5.1 [Intro to ML monitoring](#1-ml-monitoring-intro)
 - 5.2 [Environment setup](#2-env-setup)
@@ -23,9 +23,9 @@ How is ML monitoring different to "regular" monitoring? It adds an additional la
 - **Service Health (a must)**: Uptime, Memory, Latency
 - **Model Health and Data Health**: Model accuracy, data drift, concept drift, broken pipelines, schema change, data outage, model bias, underperforming segments
 
-A checklist (what requires what monitoring):
+A checklist (what requires what monitoring - a good starting point):
 
-1. **Service health**: Does it work ?
+1. **Service health**: Does it work?
 2. **Model performance**: How it performs? / Did anything break?
 3. **Data quality and integrity**: Where it breaks? / Where to dig further?
 4. **Data and concept drift**: Is the model still relevant?
@@ -33,7 +33,7 @@ A checklist (what requires what monitoring):
 **Comprehensice monitoring:** more things to look at (other than from the list above)
 
 - **Performance by segment**: segmenting data in categories and applying quality metrics by category and monitor them
-- **Model bias / fairness**: Imprtant for healthcare and finance
+- **Model bias / fairness**: Imprtant for healthcare and finance (trust in the system)
 - **Outlier**: Risk reduction
 - **Explainability**: Insight how a decision was made / reasoned
  
@@ -261,6 +261,11 @@ The data in the postgres database can now be used for a `Grafana` dashboard.
 <a id="7-quality-monitoring"></a>
 ## 5.7 Data quality monitoring
 This section is mostly similar to the previous section `5.6 Dummy Monitoring` but with the difference that `Evidently` was used. The code can be fond here: [`evidently_metrics_calculation.py`](taxi_monitoring/evidently_metrics_calculation.py).
+
+Execution of the code:
+```bash
+python evidently_metrics_calculation.py
+```
 
 <a id="8-grafana-dashboard"></a>
 ## 5.8 Save Grafana Dashboard

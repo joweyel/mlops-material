@@ -1,7 +1,5 @@
 # Notes - Introduction
 
-
-
 ## What is MLOps
 
 - **`MLOps`**: 
@@ -79,6 +77,15 @@ df = pd.read_parquet("data.parquet")
 ```
 
 ### Training a ride duration prediction model
+
+Create conda environment for this section
+```bash
+conda create -n mlops-zc-1 python=3.10 pip 
+
+conda activate mlops-zc-1
+
+pip install pandas 'numpy<2' matplotlib seaborn scikit-learn pyarrow ipykernel pyarrow
+```
 
 For Code, look into the [duration-prediction-example](./duration-prediction-example.ipynb) notebook.
 

@@ -1,5 +1,26 @@
 # Notes - Introduction
 
+- [Notes - Introduction](#notes---introduction)
+  - [What is MLOps](#what-is-mlops)
+  - [MLOps maturity model](#mlops-maturity-model)
+    - [Model Monitoring](#model-monitoring)
+    - [Now: The MLOps Maturity Model (Summary)](#now-the-mlops-maturity-model-summary)
+  - [Running example: NY Taxi trips dataset](#running-example-ny-taxi-trips-dataset)
+    - [Loading the data-format `Parquet`](#loading-the-data-format-parquet)
+    - [Training a ride duration prediction model](#training-a-ride-duration-prediction-model)
+  - [Why do we need MLOps](#why-do-we-need-mlops)
+  - [Course overview](#course-overview)
+  - [Environment preparation](#environment-preparation)
+    - [On local computer](#on-local-computer)
+    - [On AWS](#on-aws)
+      - [Create AWS EC2-Instance](#create-aws-ec2-instance)
+      - [**Installing required Software on AWS**](#installing-required-software-on-aws)
+      - [**Get the MLOps Zoomcamp Github-Repo**](#get-the-mlops-zoomcamp-github-repo)
+      - [**Use VS Code over SSH to work on the Code on AWS**](#use-vs-code-over-ssh-to-work-on-the-code-on-aws)
+  - [Homework](#homework)
+
+
+
 ## What is MLOps
 
 - **`MLOps`**: 
@@ -220,7 +241,7 @@ git clone git@github.com:DataTalksClub/mlops-zoomcamp.git
 
 ## Homework
 
-The homework can be found [here](homework/).
+The homework can be found [here](homework-25/).
 
 **References:**
 

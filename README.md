@@ -9,55 +9,44 @@ Machine Learning Operations repository with my work during MLOps Zoomcamp by [Da
 
 ### [Module 1: Introduction](1-Introduction)
 
-* What is MLOps
-* MLOps maturity model
-* Running example: NY Taxi trips dataset
-* Why do we need MLOps
-* Course overview
-* Environment preparation
-* Homework
+- What is MLOps?
+- MLOps maturity model
+- NY Taxi dataset (our running example)
+- Why MLOps is essential
+- Course structure & environment setup
+- Homework
 
-### [Module 2: Experiment-Tracking](2-Experiment-Tracking)
-* Experiment Tracking into
-* Getting started with MLflow
-* Experiment tracking with MLflow
-* Model management
-* Model registry
-* Mlflow in practice
-* Homework
+### [Module 2: Experiment Tracking & Model Management](02-experiment-tracking)
+- Introduction to experiment tracking
+- MLflow basics
+- Model saving and loading
+- Model registry
+- Hands-on MLflow exercises
+- Homework
+  
 ### [Module 3: Orchestration](3-Orchestration)
-* Workflow orchestration
-* Prefect 2.0
-* Turning a notebook into a pipeline
-* Deployment of Prefect Flow
-* Homework
+- Workflow orchestration
+- Homework
 
 ### [Module 4: Deployment](4-Deployment)
-* Three ways of model deployment: Online (web and streaming) and offline (batch)
-* Web service: model deployment with Frask
-* Streaming: consuming events with AWS Kinesis and Lambda
-* Batch: scoring data offline
-* Homework
+- Deployment strategies: online (web, streaming) vs. offline (batch)
+- Deploying with Flask (web service)
+- Streaming deployment with AWS Kinesis & Lambda
+- Batch scoring for offline processing
+- Homework
 
 ### [Module 5: Model Monitoring](5-Monitoring)
-
-* Monitoring ML-based services
-* Monitoring web services with Prometheus, Evidently, and Grafana
-* Monitoring batch jobs with Prefect, MongoDB, and Evidently
+- Monitoring ML-based services
+- Web service monitoring with Prometheus, Evidently, and Grafana
+- Batch job monitoring with Prefect, MongoDB, and Evidently
+- Homework
 
 ### [Module 6: Best Practices](6-Best-Practices)
-
-* Testing: unit, integration
-* Python: linting and formatting
-* Pre-commit hooks and makefiles
-* CI/CD (Github Actions)
-* Infrastructure as code (Terraform)
-* Homework
+- Unit and integration testing
+- Linting, formatting, and pre-commit hooks
+- CI/CD with GitHub Actions
+- Infrastructure as Code (Terraform)
+- Homework
 
 ### [Project](7-Project)
-
-* End-to-end project with all the things above
-
-
-### [Homework-Deadlines](Deadlines)
-- [MLOps Zoomcamp 2023 Deadlines](https://docs.google.com/spreadsheets/d/e/2PACX-1vRNTwA0Of1lyprYpn2YxU-l0gvNeq-up7g7ITB42nPf2gT9Qd3PTzqTmkjAZjk1s__r7D99CsJfcZEO/pubhtml?gid=0&single=true)
+- End-to-end project integrating all course concepts

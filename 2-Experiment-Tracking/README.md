@@ -23,9 +23,12 @@
 - Relevance of Infoirmation depends on experiment
 
 ### Why is Experiment tracking important?
-- **`Reproducibility`**: Just as with other sciences, Data Scientists want to be able to reproduce results of experiments
-- **`Organization`**: Helps to organize the project when working with other people. Even when working alone, a certain amount of organization is usually beneficial for success of a project.
-- **`Optimization`**: Automates the optimization of ML models.
+- **`Reproducibility`**: 
+  - Just as with other sciences, Data Scientists want to be able to reproduce results of experiments
+- **`Organization`**: 
+  - Helps to organize the project when working with other people. Even when working alone, a certain amount of organization is usually beneficial for success of a project.
+- **`Optimization`**: 
+  - Automates the optimization of ML models.
 
 ### Tracking Experiments in Spreadsheets (is not enough!)
 - Often filled manually and is error prone
@@ -36,9 +39,12 @@
 
 - Open Source platform for ML Lifecycle
 - Installed as <u>python package with 4 main modules</u>: 
-    - `Tracking`: focused on experiment tracking
-    - `Models`: standard format for packaging ML models that can be used in downstream tools
-    - `Model Registry`: centralized model store, set of APIs, and UI, to collaboratively <u>manage the full lifecycle of an MLflow Model</u>
+    - `Tracking`: 
+      - Focused on experiment tracking
+    - `Models`: 
+      - Standard format for packaging ML models that can be used in downstream tools
+    - `Model Registry`: 
+      - Centralized model store, set of APIs, and UI, to collaboratively <u>manage the full lifecycle of an MLflow Model</u>
     - `Projects`
 
 ### Using MLflow for experiment tracking
@@ -178,7 +184,7 @@ The [code](duration-prediction.ipynb) is from the chapter 2 version of the re-oc
 After this section you should be able to:
 - Add paramter tuning to the notebook
 - See the results in MLflow UI
-- Choose the best performing models
+- Choose the best performing models by doing Hyperparameter-Tuning
 - Use Autolog
 
 ### Hyperparameter tuning with `hyperopt` using a `xgboost`-model

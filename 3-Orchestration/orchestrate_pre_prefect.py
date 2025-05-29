@@ -9,6 +9,7 @@ from sklearn.metrics import mean_squared_error
 import mlflow
 import xgboost as xgb
 from prefect import flow, task
+from typing import Tuple
 
 
 def read_data(filename: str) -> pd.DataFrame:
@@ -30,15 +31,13 @@ def read_data(filename: str) -> pd.DataFrame:
 
 def add_features(
         df_train: pd.DataFrame, df_val: pd.DataFrame
-) -> tuple(
-    [
-        scipy.sparse._csr.csr_matrix,
-        scipy.sparse._csr.csr_matrix,
-        np.ndarray,
-        np.ndarray,
-        sklearn.feature_extraction.DictVectorizer
-    ]
-):
+) -> Tuple[
+    scipy.sparse._csr.csr_matrix,
+    scipy.sparse._csr.csr_matrix,
+    np.ndarray,
+    np.ndarray,
+    sklearn.feature_extraction.DictVectorizer
+]:
     """Add features to the model"""
 
     df_train['PU_DO'] = df_train['PULocationID'] + '_' + df_train['DOLocationID']

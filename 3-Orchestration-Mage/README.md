@@ -201,7 +201,7 @@ def load_data(*args, **kwargs) -> pd.DataFrame:
 ![utils_cleaning](imgs/3.1_6_utils_cleaning.png)
 
 <details>
-<summary><b>prepare.py</b></summary>
+<summary><b>cleaning.py</b></summary>
 
 ```python
 import pandas as pd
@@ -230,7 +230,7 @@ def clean(
 ```
 </details>
 
-All other utility functions can be found here: https://github.com/mage-ai/mlops/tree/master/mlops/utils
+All other utility functions can be found here: https://github.com/joweyel/mlops/tree/master/mlops/utils/data_preparation
 
 
 ### 3.1.4 Prepare
@@ -328,15 +328,25 @@ def export(
     **kwargs
 ) -> Tuple[csr_matrix, csr_matrix, csr_matrix, Series, Series, Series, BaseEstimator
 ]:
+    ## On Full dataset ##
+
+    # Obtains data frames from given data
     df, df_train, df_val = data
+    # Gets target value for the training
     target = kwargs.get('target', 'duration')
+    # Gets dicts of data for specified features
     X, _, _ = vectorize_features(select_features(df))
+    # Gets target data
     y: Series = df[target]
 
+    ## On splitted data ##
+
+    # Transform the splitted data
     X_train, X_val, dv = vectorize_features(
         select_features(df_train), 
         select_features(df_val)
     )
+    # Gets targets for the splitted data
     y_train = df_train[target]
     y_val = df_val[target]
 
@@ -362,6 +372,47 @@ def test_dataset(
     assert (
         len(y.index) == X.shape[0]
     ), f"Entire dataset should have {X.shape[0]} examples, but has {len(y.index)}"
+
+@test
+def test_training_set(
+    X: csr_matrix,
+    X_train: csr_matrix,
+    X_val: csr_matrix,
+    y: Series,
+    y_train: Series,
+    y_val: Series,
+    *args
+) -> None:
+    assert (
+        X_train.shape[0] == 54378
+    ), f"Train dataset should have 54378 examples, but has {X_train.shape[0]}"
+    assert (
+        X_train.shape[1] == 5094
+    ), f"Train dataset should have 5094 features, but has {X_train.shape[1]}"
+    assert (
+        len(y_train.index) == X_train.shape[0]
+    ), f"Train dataset should have {X_train.shape[0]} examples, but has {len(y_train.index)}"
+
+
+@test
+def test_validation_set(
+    X: csr_matrix,
+    X_train: csr_matrix,
+    X_val: csr_matrix,
+    y: Series,
+    y_train: Series,
+    y_val: Series,
+    *args
+) -> None:
+    assert (
+        X_val.shape[0] == 51492
+    ), f"Validation dataset should have 51492 examples, but has {X_val.shape[0]}"
+    assert (
+        X_val.shape[1] == 5094
+    ), f"Validation dataset should have 5094 features, but has {X_val.shape[1]}"
+    assert (
+        len(y_val.index) == X_val.shape[0]
+    ), f"Validation dataset should have {X_val.shape[0]} examples, but has {len(y_val.index)}"
 
 ```
 </details>
@@ -521,9 +572,9 @@ def train(
 - Creating new pipeline (`xgboost_training`) for hyperparameter-tuning and training of XGBoost model
 - Add GDP `training_set` to the pipeline
 - Create `transformer`-block of type `Base template (generic)` and name it `hyperparameter_tuning/XGBoost`
-- <u>Utility functions for XGBoost hyperparameter-tuning</u> can be found here https://github.com/mage-ai/mlops/tree/master/mlops/utils/hyperparameters/shared.py
-- <u>Utility functions for XGBoost models</u> can be found in `xgboost.py` here https://github.com/mage-ai/mlops/tree/master/mlops/utils/models/xgboost.py
-- <u>Utility functions for Logging of Experiments</u> can be found in `logging.py` here https://github.com/mage-ai/mlops/blob/master/mlops/utils/logging.py
+- <u>Utility functions for XGBoost hyperparameter-tuning</u> can be found here https://github.com/joweyel/mlops/tree/master/mlops/utils/hyperparameters/shared.py
+- <u>Utility functions for XGBoost models</u> can be found in `xgboost.py` here https://github.com/joweyel/mlops/tree/master/mlops/utils/models/xgboost.py
+- <u>Utility functions for Logging of Experiments</u> can be found in `logging.py` here https://github.com/joweyel/mlops/blob/master/mlops/utils/logging.py
   - For Logging MLflow is used
 - **Variables** can be used to configure parameters like `early_stopping_rounds` and `max_evaluations`
 

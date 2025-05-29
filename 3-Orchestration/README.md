@@ -1,6 +1,65 @@
 # 3. Orchestration and ML Pipelines
 
-- **`Prefect-Website`**: [docs.prefect.io](https://docs.prefect.io/latest/)
+- [3. Orchestration and ML Pipelines](#3-orchestration-and-ml-pipelines)
+  - [Machine Learning (ML) Pipelines](#machine-learning-ml-pipelines)
+  - [3.1 Introduction to Workflow Orchestration](#31-introduction-to-workflow-orchestration)
+    - [If you give an MLOps engineer a job...](#if-you-give-an-mlops-engineer-a-job)
+    - [Orchestrate \& observe your Python workflows ar scale](#orchestrate--observe-your-python-workflows-ar-scale)
+  - [3.2. Introduction to Prefect](#32-introduction-to-prefect)
+    - [Goals of this Section](#goals-of-this-section)
+    - [Why use Prefect?](#why-use-prefect)
+    - [Self-Hosting a Prefect Server](#self-hosting-a-prefect-server)
+    - [Terminology](#terminology)
+    - [Example](#example)
+  - [3.3 Prefect Workflow](#33-prefect-workflow)
+  - [3.4 Deploying your Workflow](#34-deploying-your-workflow)
+    - [Create, run and deploy](#create-run-and-deploy)
+  - [3.5 Working with Deployments](#35-working-with-deployments)
+    - [Creating an Artifact](#creating-an-artifact)
+    - [Creating and deploying S3 file with markdown artifact](#creating-and-deploying-s3-file-with-markdown-artifact)
+  - [3.6 - Prefect Cloud (Optional)](#36---prefect-cloud-optional)
+
+
+
+## Machine Learning (ML) Pipelines
+
+![ml_pipeline](imgs/ml-pipeline.png)
+
+- Usually jupyter notebooks are good for prototyping and visualization of ML results but they are not that suitable in a continuous MLOps setting.
+- Notebooks are often transformed to a script and used as a pipeline
+
+**Example (Taxi Data) for a basic ML-Pipeline skeleton:**
+```python
+def download_data(year, month):
+    ...
+    return df
+
+def prepare_data(df):
+    ...
+    return df
+
+def feature_engineering(df):
+    ...
+    return X, y
+
+def find_best_model(X, y):
+    ...
+    return params
+
+def train_model(X, y, params):
+    ...
+    return model
+
+def main():
+    df = download_data(2023, 1)
+    df = prepare_data(df)
+    X, y = feature_engineering(df)
+    model_params = find_best_model(X, y)
+    model = train_model(X, y, model_params)
+```
+
+
+- **`Prefect-Website`**: [docs.prefect.io](https://docs.prefect.io/v3/get-started)
 
 ## 3.1 Introduction to Workflow Orchestration
 
@@ -45,7 +104,7 @@ Those tasks require a lot of work to do and work properly. You could also do eve
 ### Why use Prefect?
 - Flexible, open-source Python framework to turn standard pipelines into fault tolerant dataflows.
 - Installing (on Linux) with `pip install -U prefect`
-- For installation on other OS's please look into the [Installation Docs](https://docs.prefect.io/2.10.14/getting-started/installation/).
+- For installation on other OS's please look into the [Installation Docs](https://docs.prefect.io/v3/get-started).
 
 ### Self-Hosting a Prefect Server
 - [Info-Page](https://docs.prefect.io/latest/host/)
@@ -109,12 +168,12 @@ cd prefect-mlops-zoomcamp
 ```
 2. Create a conda environment
 ```shell
-conda create -n prefect-ops python=3.9.12
+conda create -n prefect-ops python=3.10.17
 ```
 3. Install the required dependencies
 ```shell
 pip install -r requirements.txt
-# If there is a problem with pydantic, update `prefect`
+# IF there is a problem with pydantic, update `prefect` otherwise don't!
 pip install -U prefect
 ```
 4. Start a `Prefect`-Server
@@ -131,7 +190,7 @@ prefect config set PREFECT_API_URL=http://127.0.0.1:4200/api
 import httpx
 from prefect import flow, task
 
-@task(retries=4, retry_delay_seconds=0.1, log_prints=True)
+@task(retries=4, retry_delay_seconds=1.0, log_prints=True)
 def fetch_cat_fact():
     cat_fact = httpx.get("https://f3-vyx5c2hfpq-ue.a.run.app/")
     #An endpoint that is designed to fail sporadically
@@ -149,7 +208,7 @@ if __name__ == "__main__":
 ```
 - `@task` decorator of `fetch_cat_fact`:
     - retries the task up to 4 times (in case of failure)
-    - time between each try is 0.1 seconds
+    - time between each try is 1 seconds
     - logs all print statements during the task
 
 
@@ -190,11 +249,13 @@ if __name__ == "__main__":
 
 ## 3.3 Prefect Workflow
 
--  In  the cloned repository open the file `orchestrate_pre_prefect.py` (in sub-folder `3.3`) to see a workflow without prefect.
+**Pipeline without Prefect**
+- In the cloned repository open the file [`orchestrate_pre_prefect.py`](prefect-mlops-zoomcamp/3.3/orchestrate_pre_prefect.py) (in sub-folder `3.3`) to see a workflow without prefect.
+- You can run the pipeline from the root-directory of the repo with `python3 3.3/orchestrate_pre_prefect.py`
 
 The data-files used are also in the repository, but they could be from another year, that is not in the default-parameters of the main-function. You have to add the new paths yourself.
 
-- Now open `orchestrate.py` from the same folder `3.3`. This file has the adequate `prefect`-decorators
+- Now open [`orchestrate.py`](prefect-mlops-zoomcamp/3.3/orchestrate.py) from the same folder `3.3`. This file has the adequate `prefect`-decorators
 ```python
 # retries opening 3 times + delay for when data is obtained from the internet
 @task(retries=3, retry_delay_seconds=2)
@@ -217,83 +278,79 @@ def train_best_model(...):
 
 ## 3.4 Deploying your Workflow
 - Productionizing the workflow
-- Deploy on prefect-server (for now locally)
-- Allows scheduling and cooperation (wehen running on prefect-cloud)
+- Deploy on Prefect Server (locally for now)
+- Enables scheduling and team collaboration (especially on Prefect Cloud)
 
-Go to the folder `3.4` of the cloned repo and use the following command
-```shell
-prefect project init
-```
-This will cereate 3 files and 1 folder:
-- `.prefectignore`: Gitignore-like file
-- `deployment.yaml`: Important for templating, when you want to make multiple deployments from one project.
-- `.prefect/`: a hidden folder
-- `prefect.yaml`: See code below!
-```yaml
-# File for configuring project / deployment build, push and pull steps
-
-# Generic metadata about this project
-name: '3.4'
-prefect-version: 2.10.8
-
-# build section allows you to manage and build docker images
-build: null
-
-# push section allows you to manage if and how this project is uploaded to remote locations
-push: null
-
-# pull section allows you to provide instructions for cloning this project in remote locations
-pull:
-- prefect.projects.steps.git_clone_project:
-    repository: https://github.com/discdiver/prefect-mlops-zoomcamp
-    branch: main
-    access_token: null
-
-```
 ### Create, run and deploy
 
-<p align="center">
-    <img src="imgs/Activity-create-run-deployment.png", style="max-width: 80%; height: auto;">
+<!-- <p align="center">
+    <img src="imgs/Activity-create-run-deployment.png" style="max-width: 80%; height: auto;">
     <figcaption align="center">Think it, dream it, do it!</figcaption>
-</p>
+</p> -->
 
-<!-- ![activity](imgs/Activity-create-run-deployment.png) -->
+1. **Ensure your directory is set up**
+    - Navigate to the `prefect-mlops-zoomcamp` directory
+    - Add `@flow` and `@task` decorators to your Python scripts as needed
+    - There is no longer a `prefect project init` command in Prefect 3
 
-1. **Create a project in a new directory**
-    - Already present
-2. **Add adequate @flow decorators to your code**
-    - Already present in the code (see cloned repo)
-3. **Starting the Prefect Server**
-    - For now done locally with
+2. **Start the Prefect Server (locally)**
     ```shell
     prefect server start
     ```
-    - Create a `workpool` to work in
-        - Can be done with the UI or with the CLI
-            - UI: click on `workpools`-tab, set a name and decription and the type (+ some other parameters if required)
-        - Can be created locally or on the cloud (specified with `type`-parameter)
-        - After creating the `workpool` you can reference it when running prefect
-5. **Deploy the prefect flow**
-    - Get help with `prefect deploy --help`
-    - We need to specify an entrypoint for the project. This has the format: 
-        - `./path/to/file.py:flow_function`
-        - *Example*:
-        ```shell
-        # name: taxi1, workpool: zoompool
-        prefect deploy orchestrate.py:main_flow -n taxi_local_data -p zoompool
-        ```
-4. **Deploy the worker that polls the workpool**
--   ```shell
-    prefect worker start -p zoompool
+
+3. **Create a Work Pool**
+    - Can be done via the Prefect UI or CLI
+    - Example using CLI:
+    ```shell
+    prefect work-pool create zoompool -t process
     ```
-- If the pool did not exist alread you could use the parameter `-t [pool-type]` to create one on the fly and the parameter `-p [poolname]` is used to name it
--   ```shell
-    # Example
-    prefect worker start -p zoompool -t process
+
+4. **Deploy the flow**
+    - Use `prefect deploy` to create a deployment YAML configuration
+    - Specify the entrypoint to your flow as `file.py:flow_function`
+    - Example:
+    ```shell
+    prefect deploy 3.4/orchestrate.py:main_flow -n taxi_local_data -p zoompool
+    ```
+    - You will be prompted:
+        - "Would you like your workers to pull your flow code from a remote storage location?" → answer `n`
+        - "Would you like to configure schedules?" → answer `n`
+        - "Would you like to save configuration for this deployment?" → answer `y`
+
+5. **Start a worker to poll the Work Pool**
+    ```shell
+    prefect worker start -p zoompool
     ```
 
 6. **Run the deployment**
+    - From CLI, trigger a run manually:
+    ```shell
+    prefect deployment run main-flow/taxi_local_data --param train_path=./data/green_tripdata_2023-01.parquet --param val_path=./data/green_tripdata_2023-02.parquet
+    ```
+
+7. **What about `prefect.yaml`?**
+    - This file is generated automatically by `prefect deploy`
+    - You can customize it as needed
+    - Example structure:
+    ```yaml
+    name: taxi_local_data
+    version: null
+    tags: []
+    description: null
+    schedule: null
+    parameters:
+      train_path: "./data/green_tripdata_2023-01.parquet"
+      val_path: "./data/green_tripdata_2023-02.parquet"
+    flow_name: main_flow
+    entrypoint: orchestrate.py:main_flow
+    work_pool:
+      name: zoompool
+      work_queue_name: null
+      job_variables: {}
+    ```
+
 ![deploy](imgs/prefect_run.png)
+
 
 
 ## 3.5 Working with Deployments
@@ -340,7 +397,7 @@ if __name__ == "__main__":
     create_s3_bucket_block()
 ```
 
-When everythin is setup you can call the following code to create the credentials and the bucket block:
+When everything is setup you can call the following code to create the credentials and the bucket block:
 ```shell
 python3 3.5/create_s3_bucket_block.py
 ```

@@ -725,30 +725,31 @@ def source(
 
 ### 3.3.4 Overview
 - How to create different types of visualization.
-- Please watch the videos 3.3.4 to 3.3.10 from this [playlist](https://www.youtube.com/playlist?list=PL3MmuxUbc_hIUISrluw_A7wDSmfOhErJK). Each is about 2 to 3 minutes long.
+- Please watch the videos 3.3.4 to 3.3.10 from this [playlist](https://www.youtube.com/playlist?list=PL_ItKjYd0DsiUpEzPQqYM04O6jQTkCjTN). Each is about 2 to 3 minutes long.
 
 ### 3.3.5 Time series bar
-[Video](https://www.youtube.com/watch?v=6kqHoxAL0DY&list=PL3MmuxUbc_hIUISrluw_A7wDSmfOhErJK&index=38&pp=iAQB)
+[![Video](https://img.youtube.com/vi/6kqHoxAL0DY/mqdefault.jpg)](https://www.youtube.com/watch?v=6kqHoxAL0DY)
 
 
 ### 3.3.6 Histogram
-[Video](https://www.youtube.com/watch?v=GQMgCzI-Qrg&list=PL3MmuxUbc_hIUISrluw_A7wDSmfOhErJK&index=39&pp=iAQB)
+[![Video](https://img.youtube.com/vi/GQMgCzI-Qrg/mqdefault.jpg)](https://www.youtube.com/watch?v=GQMgCzI-Qrg)
 
 
 ### 3.3.7 Bar chart
-[Video](https://www.youtube.com/watch?v=q4Quk6GeVRk&list=PL3MmuxUbc_hIUISrluw_A7wDSmfOhErJK&index=40&pp=iAQB)
+[![Video](https://img.youtube.com/vi/q4Quk6GeVRk/mqdefault.jpg)](https://www.youtube.com/watch?v=q4Quk6GeVRk)
+
 
 
 ### 3.3.8 Pie chart
-[Video](https://www.youtube.com/watch?v=I5qR3OtASXs&list=PL3MmuxUbc_hIUISrluw_A7wDSmfOhErJK&index=41&pp=iAQB)
+[![Video](https://img.youtube.com/vi/I5qR3OtASXs/mqdefault.jpg)](https://www.youtube.com/watch?v=I5qR3OtASXs)
 
 
 ### 3.3.9 Setup alerts
-[Video](https://www.youtube.com/watch?v=DjtE3webtjE&list=PL3MmuxUbc_hIUISrluw_A7wDSmfOhErJK&index=42&pp=iAQB)
+[![Video](https://img.youtube.com/vi/DjtE3webtjE/mqdefault.jpg)](https://www.youtube.com/watch?v=DjtE3webtjE)
 
 
 ### 3.3.10 Email
-[Video](https://www.youtube.com/watch?v=H6D7zyqSQMw&list=PL3MmuxUbc_hIUISrluw_A7wDSmfOhErJK&index=43&pp=iAQB)
+[![Video](https://img.youtube.com/vi/H6D7zyqSQMw/mqdefault.jpg)](https://www.youtube.com/watch?v=H6D7zyqSQMw)
 
 
 <a id="4-triggering"></a>

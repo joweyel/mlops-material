@@ -173,29 +173,29 @@ if __name__ == "__main__":
 
 ### Example
 1. Get the Repo
-```shell
+```bash
 git clone https://github.com/joweyel/prefect-mlops-zoomcamp -b prefect3
 cd prefect-mlops-zoomcamp
 ```
 
 2. Create a conda environment
-```shell
+```bash
 conda create -n prefect-ops3 python=3.11 pip
 conda activate prefect-ops3
 ```
 
 3. Install the required dependencies
-```shell
+```bash
 pip install -r requirements.txt
 ```
 
 4. Start a `Prefect`-Server
-```shell
+```bash
 prefect server start
 ```
 
 5. Configure Prefect to communicate with the server
-```shell
+```bash
 prefect config set PREFECT_API_URL=http://127.0.0.1:4200/api
 ```
 
@@ -567,7 +567,7 @@ You're right, let me provide explanations for each point in section 3.4:
 - Add `@flow` and `@task` decorators to your Python scripts - these decorators tell Prefect which functions to track and orchestrate. Without at least one `@flow`, you can't deploy
 
 2. **Start the Prefect Server**
-```shell
+```bash
 prefect server start
 ```
 - Starts a local Prefect server on `http://127.0.0.1:4200`
@@ -575,7 +575,7 @@ prefect server start
 - Keep this terminal window open while working
 
 3. **Create a Work Pool**
-```shell
+```bash
 prefect work-pool create zoompool -t process
 ```
 - Work pools manage where and how your flows run
@@ -583,7 +583,7 @@ prefect work-pool create zoompool -t process
 - Work pools queue deployments and workers pick them up
 
 4. **Deploy the flow**
-```shell
+```bash
 prefect deploy 3.4/orchestrate.py:main_flow \
     -n taxi_local_data \
     -p zoompool \
@@ -595,7 +595,7 @@ prefect deploy 3.4/orchestrate.py:main_flow \
 - `--cron "0 0 * * *"` - optional schedule (runs daily at midnight)
 
 5. **Start a worker**
-```shell
+```bash
 prefect worker start -p zoompool
 ```
 - Workers poll work pools and execute deployments
@@ -603,7 +603,7 @@ prefect worker start -p zoompool
 - One worker can handle multiple flows
 
 6. **Run the deployment**
-```shell
+```bash
 prefect deployment run 'main-flow/taxi_local_data' \
     --param train_path=./data/green_tripdata_2023-01.parquet \
     --param val_path=./data/green_tripdata_2023-02.parquet
@@ -630,14 +630,14 @@ variables:
   model_path: ./models
 
 # Pull section for code storage
-# pull:
-# - prefect.deployments.steps.git_clone:
-#     repository: https://github.com/your-repo/prefect-mlops.git
+pull:
+- prefect.deployments.steps.git_clone:
+    repository: https://github.com/joweyel/prefect-mlops-zoomcamp.git
 
 # Deployments section
 deployments:
 - name: taxi_local_data
-  version: 
+  version: 3.0
   tags: ["ml", "training"]
   description: Train model on local taxi data
   entrypoint: 3.4/orchestrate.py:main_flow
@@ -652,7 +652,7 @@ deployments:
 ```
 
 Summarizing the `prefect.yaml`-based deployment:
-```shell
+```bash
 # Start Prefect worker for the deployment
 prefect worker start --pool zoompool
 
@@ -668,9 +668,16 @@ prefect deployment run taxi_local_data
 ### Working with External Storage (S3)
 
 **Install Prefect-AWS integration**
-```shell
+```bash
 pip install prefect-aws
 ```
+
+Register the block types in `prefect-aws` to make them available for use
+```bash
+prefect block register -m prefect_aws
+```
+
+**Documentation**: https://docs.prefect.io/integrations/prefect-aws/index#prefect-aws
 
 **Using Variables instead of Blocks (Prefect 3 approach)**
 ```python
@@ -707,6 +714,8 @@ async def download_from_s3():
 ```
 
 ### Creating an Artifact
+
+See the file [`orchestrate_s3.py`](prefect-mlops-zoomcamp/3.5/orchestrate_s3.py)
 
 ```python
 from prefect import flow, task
@@ -757,31 +766,68 @@ def main_flow_s3():
 ```yaml
 # prefect.yaml
 name: mlops-zoomcamp
-prefect-version: 3.0.0
+prefect-version: 3.4.4
 
+# Global variables can replace some block usage
+variables:
+  data_path: ./data
+  model_path: ./models
+
+# Pull section for code storage
+pull:
+- prefect.deployments.steps.git_clone:
+    repository: https://github.com/joweyel/prefect-mlops-zoomcamp.git
+
+# Deployments section
 deployments:
 - name: taxi_local_data
+  version: 3.0
+  tags: ["ml", "training"]
+  description: Train model on local taxi data
   entrypoint: 3.4/orchestrate.py:main_flow
-  work_pool: 
+  parameters:
+    train_path: ./data/green_tripdata_2023-01.parquet
+    val_path: ./data/green_tripdata_2023-02.parquet
+  work_pool:
     name: zoompool
-    
+#   schedule:
+#     cron: "0 0 * * *"
+#     timezone: "America/New_York"
+
 - name: taxi_s3_data
+  version: 3.0
+  tags: ["ml", "training", "aws", "s3"]
+  description: Obtains data from s3 bucket and trains model with it
   entrypoint: 3.5/orchestrate_s3.py:main_flow_s3
-  work_pool: 
+  parameters:
+    train_path: ./data/green_tripdata_2023-01.parquet
+    val_path: ./data/green_tripdata_2023-02.parquet
+  work_pool:
     name: zoompool
-  pull:
-  - prefect.deployments.steps.set_working_directory:
-      directory: /opt/prefect/flows
+```
+
+**Start a Worker in the `zoompool`**
+```bash
+prefect worker start --pool zoompool
 ```
 
 **Deploy all flows**
-```shell
+```bash
 prefect deploy --all
 ```
 
 **Deploy specific flow**
-```shell
+```bash
 prefect deploy -n taxi_s3_data
+```
+
+**Explicitly start deployment of flow**
+```bash
+# Local
+prefect deployment run 'main-flow/taxi_local_data'
+
+# S3
+prefect deployment run 'main-flow-s3/taxi_s3_data'
 ```
 
 ## 3.6 - Prefect Cloud (Optional)
@@ -795,7 +841,7 @@ prefect deploy -n taxi_s3_data
 6. **SSO/SAML** authentication
 
 ### Getting Started with Prefect Cloud:
-```shell
+```bash
 # Login to Prefect Cloud
 prefect cloud login
 
@@ -807,7 +853,7 @@ prefect cloud workspace set my-mlops-workspace
 ```
 
 ### Creating Cloud-based Work Pools:
-```shell
+```bash
 # Create a cloud work pool
 prefect work-pool create cloud-pool -t prefect:cloud-run
 ```

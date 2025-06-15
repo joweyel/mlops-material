@@ -1,5 +1,22 @@
 # 4. Model Deployment
 
+- [4. Model Deployment](#4-model-deployment)
+  - [4.1 Three ways of deploying a model](#41-three-ways-of-deploying-a-model)
+    - [MLOps: Design, Train, Experiment and Deploy](#mlops-design-train-experiment-and-deploy)
+    - [Batch Mode - Marketing Example](#batch-mode---marketing-example)
+    - [Web Service (1-to-1) - Trip Duration Example](#web-service-1-to-1---trip-duration-example)
+    - [Streaming (1-to-N) - Taxi Ride](#streaming-1-to-n---taxi-ride)
+  - [4.2 Web-services: Deploying models with Flask and Docker](#42-web-services-deploying-models-with-flask-and-docker)
+  - [4.3 Web-services: Getting the models from the model registry (MLflow)](#43-web-services-getting-the-models-from-the-model-registry-mlflow)
+  - [4.4 Streaming: Deploying models with Kinesis and Lambda](#44-streaming-deploying-models-with-kinesis-and-lambda)
+    - [Granting Access and defining `AWSLambdaKinesisExecutionRole`](#granting-access-and-defining-awslambdakinesisexecutionrole)
+    - [Creating the AWS Lambda function](#creating-the-aws-lambda-function)
+    - [Creating `Kinesis` Datastream and connecting to it](#creating-kinesis-datastream-and-connecting-to-it)
+    - [Connect (Lambda) to Kinesis](#connect-lambda-to-kinesis)
+    - [Send a test event to the stream](#send-a-test-event-to-the-stream)
+    - [Create new Lambda from Container Image](#create-new-lambda-from-container-image)
+
+
 ## 4.1 Three ways of deploying a model
 
 ### MLOps: Design, Train, Experiment and Deploy

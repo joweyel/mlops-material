@@ -6,11 +6,15 @@ You'll find the starter code in the [homework](homework) directory.
 
 Solution: [homework_solution/](homework_solution/)
 
+```bash
+pipenv install scikit-learn==1.5.0
+```
+
 
 ## Q1. Notebook
 
 We'll start with the same notebook we ended up with in homework 1.
-We cleaned it a little bit and kept only the scoring part. You can find the initial notebook [here](homework/starter.ipynb).
+We cleaned it a little bit and kept only the scoring part. You can find the initial notebook [here](starter.ipynb).
 
 Run this notebook for the March 2023 data.
 
@@ -20,6 +24,10 @@ What's the standard deviation of the predicted duration for this dataset?
 * 6.24
 * 12.28
 * 18.28
+
+### Answer Q1
+
+`6.24`
 
 
 ## Q2. Preparing the output
@@ -52,8 +60,14 @@ What's the size of the output file?
 * 56M
 * 66M
 
-__Note:__ Make sure you use the snippet above for saving the file. It should contain only these two columns. For this question, don't change the
-dtypes of the columns and use `pyarrow`, not `fastparquet`. 
+### Answer Q2
+
+```bash
+du -sh output/yellow/yellow_scores_2023-03.parquet 
+# 65M     output/yellow/yellow_scores_2023-03.parquet
+```
+
+`66M`
 
 
 ## Q3. Creating the scoring script
@@ -62,6 +76,16 @@ Now let's turn the notebook into a script.
 
 Which command you need to execute for that?
 
+### Answer Q3
+
+```bash
+jupyter nbconvert --to script homework.ipynb
+```
+
+Then the exported script is renamed with this:
+```bash
+mv homework.py score.py
+```
 
 ## Q4. Virtual environment
 
@@ -75,6 +99,10 @@ and `Pipfile.lock`. The `Pipfile.lock` file keeps the hashes of the
 dependencies we use for the virtual env.
 
 What's the first hash for the Scikit-Learn dependency?
+
+### Answer Q4
+
+`057b991ac64b3e75c9c04b5f9395eaf19a6179244c089afdebaad98264bff37c`
 
 
 ## Q5. Parametrize the script
@@ -91,7 +119,18 @@ What's the mean predicted duration?
 * 21.29
 * 28.29
 
-Hint: just add a print statement to your script.
+*Hint*: just add a print statement to your script.
+
+### Answer Q5
+
+Run the scoring script with this command:
+```bash
+python3 score.py --year 2023 --month 4 --model model.bin --taxi_type yellow
+```
+
+You will get the following result for the mean predicted duration:
+
+`14.29`
 
 
 ## Q6. Docker container 
@@ -135,39 +174,36 @@ for May 2023?
 * 14.24
 * 21.19
 
+### Answer Q6
 
-## Bonus: upload the result to the cloud (Not graded)
+<details>
+<summary><b>Dockerfile</b></summary>
 
-Just printing the mean duration inside the docker image 
-doesn't seem very practical. Typically, after creating the output 
-file, we upload it to the cloud storage.
+```dockerfile
+FROM agrigorev/zoomcamp-model:mlops-2024-3.10.13-slim
 
-Modify your code to upload the parquet file to S3/GCS/etc.
+WORKDIR /app
 
+RUN pip install -U pip
+RUN pip install pipenv
 
-## Bonus: Use an orchestrator for batch inference
+COPY ["Pipfile", "Pipfile.lock", "./"]
+RUN pipenv install --system --deploy
 
-Here we didn't use any orchestration. In practice we usually do.
+COPY ["score.py", "./"]
 
-* Split the code into logical code blocks
-* Use a workflow orchestrator for the code execution
-
-## Publishing the image to dockerhub
-
-This is how we published the image to Docker hub:
-
-```bash
-docker build -t mlops-zoomcamp-model:2024-3.10.13-slim .
-docker tag mlops-zoomcamp-model:2024-3.10.13-slim agrigorev/zoomcamp-model:mlops-2024-3.10.13-slim
-
-docker login --username USERNAME
-docker push agrigorev/zoomcamp-model:mlops-2024-3.10.13-slim
+ENTRYPOINT [ "python3", "score.py" ]
 ```
 
-This is just for your reference, you don't need to do it.
+</details>
 
-
-## Submit the results
-
-* Submit your results here: https://courses.datatalks.club/mlops-zoomcamp-2025/homework/hw4
-* It's possible that your answers won't match exactly. If it's the case, select the closest one.
+The scoring script is executed with:
+```bash
+docker run -it --rm \
+    -v "$(pwd)/data:/app/data" \
+    -v "$(pwd)/output:/app/output" \
+    mlops-hw4 \
+    --year 2023 \
+    --month 5 \
+    --local
+```

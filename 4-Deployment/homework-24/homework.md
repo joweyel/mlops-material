@@ -4,8 +4,6 @@ In this homework, we'll deploy the ride duration model in batch mode. Like in ho
 
 You'll find the starter code in the [homework](homework) directory.
 
-Solution: [homework_solution/](homework_solution/)
-
 
 ## Q1. Notebook
 
@@ -67,8 +65,7 @@ Which command you need to execute for that?
 
 Now let's put everything into a virtual environment. We'll use pipenv for that.
 
-Install all the required libraries. Pay attention to the Scikit-Learn version: it should be the same as in the starter
-notebook.
+Install all the required libraries. Pay attention to the Scikit-Learn version: it should be the same as in the starter notebook.
 
 After installing the libraries, pipenv creates two files: `Pipfile`
 and `Pipfile.lock`. The `Pipfile.lock` file keeps the hashes of the
@@ -145,12 +142,12 @@ file, we upload it to the cloud storage.
 Modify your code to upload the parquet file to S3/GCS/etc.
 
 
-## Bonus: Use an orchestrator for batch inference
+## Bonus: Use Mage for batch inference
 
 Here we didn't use any orchestration. In practice we usually do.
 
 * Split the code into logical code blocks
-* Use a workflow orchestrator for the code execution
+* Use Mage to orchestrate the execution
 
 ## Publishing the image to dockerhub
 
@@ -169,5 +166,5 @@ This is just for your reference, you don't need to do it.
 
 ## Submit the results
 
-* Submit your results here: https://courses.datatalks.club/mlops-zoomcamp-2025/homework/hw4
+* Submit your results here: https://courses.datatalks.club/mlops-zoomcamp-2024/homework/hw4
 * It's possible that your answers won't match exactly. If it's the case, select the closest one.

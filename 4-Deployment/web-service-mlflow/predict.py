@@ -25,7 +25,7 @@ model = mlflow.pyfunc.load_model(logged_model)
 """
 
 MLFLOW_TRACKING_URI = "http://127.0.0.1:5000"
-# Set export RUN_ID="10f4197008104ad183466cdb19e26c4e"
+# Set export RUN_ID="60ba739ead74491787261d37d072e8c5"
 RUN_ID = os.getenv("RUN_ID")  # with pipeline as artifact
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
@@ -33,7 +33,7 @@ mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 # logged_model = f'runs:/{RUN_ID}/model'
 
 logged_model = f"s3://mlflow-artifacts-remote-jw/1/{RUN_ID}/artifacts/model"
-model = mlflow.pyfunc.load_model(logged_model) 
+model = mlflow.pyfunc.load_model(logged_model)
 
 def prepare_features(ride):
     features = {}

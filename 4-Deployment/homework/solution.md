@@ -207,3 +207,6 @@ docker run -it --rm \
     --month 5 \
     --local
 ```
+
+
+- **Mean predicted duration**: `0.19`

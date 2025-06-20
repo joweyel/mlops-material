@@ -83,11 +83,14 @@ Statistical tests on a continuous data stream:
 
 ```bash
 # Creating project folder
-mkdir taxi_monitoring
+mkdir -p taxi_monitoring
 cd taxi_monitoring
 
 # Creating conda env for project
 conda create -n py11 python=3.11
+
+# Activate conda environment
+conda activate py11
 
 # Installing required dependencies
 pip install -r requirements.txt

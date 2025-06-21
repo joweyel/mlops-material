@@ -12,6 +12,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s]: [%(
 
 SEND_TIMEOUT = 10
 rand = random.Random()
+
 create_table_query = """
 DROP TABLE IF EXISTS dummy_metrics;
 CREATE TABLE dummy_metrics(
